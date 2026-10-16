@@ -2,8 +2,7 @@ import {
   searchconsole,
   type searchconsole_v1,
 } from "@googleapis/searchconsole";
-import type { GoogleAuth, OAuth2Client } from "google-auth-library";
-import { createGoogleAuth } from "./auth.ts";
+import type { OAuth2Client } from "google-auth-library";
 
 type SearchAnalyticsRequest =
   searchconsole_v1.Schema$SearchAnalyticsQueryRequest;
@@ -31,7 +30,7 @@ export interface GscClient {
  */
 export type GscClientProvider = () => GscClient | Promise<GscClient>;
 
-export function createGscClient(auth: GoogleAuth | OAuth2Client): GscClient {
+export function createGscClient(auth: OAuth2Client): GscClient {
   const api = searchconsole({ version: "v1", auth });
   return {
     async listSites() {
@@ -50,11 +49,3 @@ export function createGscClient(auth: GoogleAuth | OAuth2Client): GscClient {
     },
   };
 }
-
-let cached: GscClient | undefined;
-
-/** Stdio provider: one client (and one GoogleAuth token cache) per process. */
-export const getGscClient: GscClientProvider = () => {
-  cached ??= createGscClient(createGoogleAuth());
-  return cached;
-};

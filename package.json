@@ -4,17 +4,9 @@
   "description": "Unofficial Model Context Protocol server for Google Search Console, with Sign in with Google (OAuth 2.1 via Better Auth) on Vercel.",
   "license": "MIT",
   "type": "module",
-  "bin": {
-    "google-search-console-mcp": "dist/index.js"
-  },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "dev": "node --watch src/index.ts",
     "build": "tsc -p tsconfig.build.json",
     "vercel-build": "pnpm build && pnpm db:migrate",
-    "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write .",

@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod";
-import { type GscClientProvider, getGscClient } from "./google/client.ts";
+import type { GscClientProvider } from "./google/client.ts";
 import { registerAnalyticsTool } from "./tools/analytics.ts";
 import { registerInspectionTool } from "./tools/inspection.ts";
 import { registerSitemapsTool } from "./tools/sitemaps.ts";
@@ -9,10 +9,8 @@ import { registerSitesTool } from "./tools/sites.ts";
 const SERVER_NAME = "google-search-console";
 export const SERVER_VERSION = "0.1.0";
 
-/** Server factory shared by the stdio entry and the HTTP handler. */
-export function createServer(
-  getClient: GscClientProvider = getGscClient,
-): McpServer {
+/** Server factory for the HTTP handler. */
+export function createServer(getClient: GscClientProvider): McpServer {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });
 
   server.registerTool(

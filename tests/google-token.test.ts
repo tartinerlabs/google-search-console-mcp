@@ -4,7 +4,6 @@ import {
   getGoogleAccessToken,
   getUserGscClient,
 } from "../src/auth/google-token.ts";
-import { createGoogleAuth } from "../src/google/auth.ts";
 import { createHttpHandler } from "../src/http.ts";
 import { CredentialsError } from "../src/utils/errors.ts";
 import {
@@ -154,18 +153,6 @@ describe("per-user Search Console client", () => {
     expect(message.result.content[0].text).toMatch(
       /^\[auth\] .*Search Console/,
     );
-    expect(message.result.content[0].text).toContain("reconnect");
-  });
-});
-
-describe("stdio credentials", () => {
-  it("should reject a GSC_CREDENTIALS_PATH that does not exist", () => {
-    expect(() =>
-      createGoogleAuth({ GSC_CREDENTIALS_PATH: "/nonexistent/creds.json" }),
-    ).toThrow(CredentialsError);
-  });
-
-  it("should fall back to Application Default Credentials", () => {
-    expect(createGoogleAuth({})).toBeDefined();
+    expect(message.result.content[0].text).toContain("Reconnect");
   });
 });

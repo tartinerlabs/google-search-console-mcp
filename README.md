@@ -4,8 +4,6 @@ An unofficial [Model Context Protocol](https://modelcontextprotocol.io) (MCP) se
 
 The server runs as a stateless Streamable HTTP endpoint on Vercel. MCP clients connect with nothing but its URL, `https://<your-domain>/mcp`: on first use the client opens a browser, you sign in with Google and approve the client, and every tool call then runs as **your** Google account. Nothing needs to run on your machine.
 
-The repository also contains a stdio entry point for local debugging with the MCP Inspector.
-
 > This project is not affiliated with, endorsed by or supported by Google. "Google" and "Search Console" are trademarks of Google LLC.
 
 ## Features
@@ -171,7 +169,6 @@ The client must support OAuth with Client ID Metadata Documents.
 ## Local development
 
 ```sh
-pnpm dev          # stdio server with Node's native type stripping and --watch
 pnpm check        # typecheck + lint + test
 pnpm format       # Biome formatter
 pnpm test:watch   # Vitest in watch mode
@@ -179,26 +176,15 @@ pnpm test:watch   # Vitest in watch mode
 
 The tests need no database, network or Google credentials. The OAuth tests run a real Better Auth instance on its in-memory adapter: they cover the discovery metadata, the 401 challenge, the allow-list at sign-up and on every MCP request, the `/sign-in` and `/consent` pages, a full authorisation-code + PKCE flow ending in an MCP tool call, and Google token retrieval and refresh (with Google's token endpoint mocked).
 
-The stdio entry is for debugging only. It reads Google credentials from `GSC_CREDENTIALS_PATH` (an `authorized_user` or service-account JSON file) or from [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials) (`GOOGLE_APPLICATION_CREDENTIALS`, or gcloud ADC created with `--client-id-file` pointing at your own OAuth client, because gcloud's built-in client cannot request Search Console scopes). A service account only sees properties it has been added to in Search Console. Without credentials the server still starts and Google tools return an `[auth]` error.
-
 ## Production build
 
 ```sh
 pnpm build        # tsc emits dist/ (Vercel runs this too)
-pnpm start        # node dist/index.js (stdio, for debugging only)
 ```
 
 ## Testing with the MCP Inspector
 
-Stdio (verified):
-
-```sh
-pnpm dlx @modelcontextprotocol/inspector node dist/index.js
-pnpm dlx @modelcontextprotocol/inspector --cli node dist/index.js --method tools/list
-pnpm dlx @modelcontextprotocol/inspector --cli node dist/index.js --method tools/call --tool-name ping
-```
-
-Remote HTTP (not verified): start the web UI with `pnpm dlx @modelcontextprotocol/inspector`, choose the *Streamable HTTP* transport and enter `https://<your-domain>/mcp`. The Inspector must support the OAuth flow described above.
+Not verified yet: start the web UI with `pnpm dlx @modelcontextprotocol/inspector`, choose the *Streamable HTTP* transport and enter `https://<your-domain>/mcp`. The Inspector must support the OAuth flow described above.
 
 ## Security considerations
 

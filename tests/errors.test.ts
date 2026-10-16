@@ -118,16 +118,6 @@ describe("classifyError", () => {
     expect(classifyError(error)).toMatchObject({ kind: "network" });
   });
 
-  it("should map missing ADC to an actionable auth error", () => {
-    const result = classifyError(
-      new Error(
-        "Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.",
-      ),
-    );
-    expect(result.kind).toBe("auth");
-    expect(result.message).toContain("GSC_CREDENTIALS_PATH");
-  });
-
   it("should map configuration errors to auth", () => {
     expect(
       classifyError(new CredentialsError("Incomplete Google credentials."))
