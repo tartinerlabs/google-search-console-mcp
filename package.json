@@ -19,17 +19,21 @@
     "format": "biome format --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm typecheck && pnpm lint && pnpm test"
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@better-auth/cimd": "1.7.10",
     "@better-auth/core": "1.7.10",
+    "@better-auth/drizzle-adapter": "1.7.10",
     "@better-auth/mcp": "1.7.10",
     "@better-auth/oauth-provider": "1.7.10",
     "@googleapis/searchconsole": "11.0.1",
     "@modelcontextprotocol/server": "2.3.1",
     "better-auth": "1.7.10",
     "better-call": "1.4.2",
+    "drizzle-orm": "1.0.0-rc.4",
     "google-auth-library": "11.3.0",
     "pg": "8.23.1",
     "pino": "10.4.0",
@@ -39,6 +43,7 @@
     "@biomejs/biome": "2.5.15",
     "@types/node": "26.6.5",
     "@types/pg": "8.23.1",
+    "drizzle-kit": "1.0.0-rc.4",
     "typescript": "7.0.2",
     "vite": "8.3.4",
     "vitest": "5.0.5"

@@ -89,19 +89,23 @@ Expired or revoked Google access is reported to the client as an `[auth]` tool e
 ## Database (Neon)
 
 1. In the Vercel dashboard, open your project → *Storage* → add **Neon** from the Marketplace and connect it to the project. This adds the connection strings to the project's environment variables. Use the **pooled** connection string as `DATABASE_URL`.
-2. Create the tables. The schema in `migrations/0001_better_auth.sql` was generated with Better Auth's CLI (`auth generate`) for this configuration. Either run it in the Neon SQL Editor, or from your machine:
+2. Create the tables with Drizzle Kit. The Drizzle schema in `src/auth/schema.ts` covers every table this configuration needs (Better Auth core plus the JWT, OAuth provider/MCP and CIMD plugins), and the SQL migrations generated from it live in `migrations/`. Apply them from your machine, preferably with Neon's direct (non-pooled) connection string:
 
    ```sh
-   psql "<your Neon connection string>" -f migrations/0001_better_auth.sql
+   DATABASE_URL="<your Neon connection string>" pnpm db:migrate
    ```
 
-   Alternatively, let the Better Auth CLI create or update the tables. It loads `src/auth/index.ts`, so every variable in the table below (except `ALLOWED_EMAILS` and the optional ones) must be set in your shell:
+   Drizzle Kit records applied migrations in the `drizzle.__drizzle_migrations` table, so re-running the command only applies new ones.
+
+3. After upgrading Better Auth or changing plugins, regenerate the schema and a new migration, then apply it as above. The Better Auth CLI loads `src/auth/index.ts`, so `DATABASE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` must be set in your shell (`generate` does not connect to the database). Re-apply the hand edits described at the top of `src/auth/schema.ts` before generating the migration:
 
    ```sh
-   pnpm dlx auth@1.7.10 migrate --config src/auth/index.ts
+   pnpm dlx auth@1.7.10 generate --config src/auth/index.ts --output src/auth/schema.ts
+   # Re-apply the hand edits in src/auth/schema.ts before running the next command.
+   pnpm db:generate
    ```
 
-   Re-run `generate`/`migrate` after upgrading Better Auth or changing plugins: Better Auth logs a "Database schema mismatch" error at start-up when tables or columns are missing.
+   Better Auth logs a "Drizzle schema mismatch" error when the Drizzle schema is missing tables or columns.
 
 ## Deploying to Vercel
 

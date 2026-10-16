@@ -1,5 +1,8 @@
+import { getAuthTables } from "@better-auth/core/db";
+import { type Column, getColumns, getTableName, is, Table } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { createAuthHandler, isUserAllowed } from "../src/auth/create-auth.ts";
+import * as schema from "../src/auth/schema.ts";
 import { createConsentHandler, createSignInHandler } from "../src/pages.ts";
 import {
   authorize,
@@ -231,5 +234,31 @@ describe("authorisation flow", () => {
       new Request(`${origin}/consent${location.search}`),
     );
     expect(response.status).toBe(401);
+  });
+});
+
+describe("drizzle schema", () => {
+  it("should match Better Auth's tables, nullability and uniqueness", async () => {
+    const { auth } = await createTestAuth();
+    const tables = new Map<string, Record<string, Column>>(
+      Object.values(schema)
+        .filter((value) => is(value, Table))
+        .map((table) => [getTableName(table), getColumns(table)]),
+    );
+    for (const { modelName, fields } of Object.values(
+      getAuthTables(auth.options),
+    )) {
+      const columns = tables.get(modelName);
+      expect(columns, modelName).toBeDefined();
+      for (const [key, field] of Object.entries(fields)) {
+        const name = `${modelName}.${field.fieldName ?? key}`;
+        const column = Object.values(columns ?? {}).find(
+          (c) => c.name === (field.fieldName ?? key),
+        );
+        expect(column, name).toBeDefined();
+        expect(column?.notNull, name).toBe(field.required !== false);
+        expect(column?.isUnique, name).toBe(field.unique === true);
+      }
+    }
   });
 });

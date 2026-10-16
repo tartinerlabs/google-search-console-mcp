@@ -62,7 +62,7 @@ export function resourceMetadataUrl(env: Env): string {
 /**
  * Better Auth options: an OAuth 2.1 authorisation server for MCP clients
  * (CIMD only, no dynamic client registration) with Google as the only way to
- * sign in. The caller supplies the database (a pg Pool in production, the
+ * sign in. The caller supplies the database (the Drizzle adapter in production, the
  * memory adapter in tests).
  */
 export function authOptions(
