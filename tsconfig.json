@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "types": ["node"],
+    "module": "esnext",
     "strict": true,
     "noEmit": true,
     "rewriteRelativeImportExtensions": true,
@@ -14,5 +12,5 @@
     "noImplicitOverride": true,
     "skipLibCheck": true
   },
-  "include": ["api", "src", "tests", "vitest.config.ts"]
+  "include": ["src", "tests", "vitest.config.ts"]
 }

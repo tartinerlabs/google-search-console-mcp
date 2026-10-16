@@ -95,7 +95,7 @@ async function signedQuery(request: Request): Promise<string | undefined> {
 }
 
 /**
- * GET /api/sign-in: there is nothing to choose, so start "Sign in with Google"
+ * GET /sign-in: there is nothing to choose, so start "Sign in with Google"
  * straight away. Better Auth keeps the signed authorisation request in the
  * Google OAuth state and resumes it after the Google callback.
  */
@@ -134,7 +134,7 @@ export async function signInPage(request: Request): Promise<Response> {
 }
 
 /**
- * GET /api/consent: show which client is asking and where it will be sent, and
+ * GET /consent: show which client is asking and where it will be sent, and
  * post the user's decision to Better Auth's consent endpoint.
  */
 export async function consentPage(request: Request): Promise<Response> {

@@ -12,7 +12,7 @@ import * as schema from "../db/schema/auth.ts";
 export const SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"];
 
 /** The MCP endpoint: the protected resource access tokens are bound to. */
-export const resource = new URL("/api/mcp", process.env.BETTER_AUTH_URL).href;
+export const resource = new URL("/mcp", process.env.BETTER_AUTH_URL).href;
 
 /**
  * A user may sign in only with a Google-verified email on ALLOWED_EMAILS
@@ -63,8 +63,8 @@ export const auth = betterAuth({
   plugins: [
     jwt(),
     mcp({
-      loginPage: "/api/sign-in",
-      consentPage: "/api/consent",
+      loginPage: "/sign-in",
+      consentPage: "/consent",
       resource,
     }),
     cimd({
