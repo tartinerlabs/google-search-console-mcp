@@ -39,7 +39,6 @@ Values follow the [Search Analytics API reference](https://developers.google.com
 - [Better Auth](https://www.better-auth.com) 1.7 acts as the OAuth 2.1 authorisation server for MCP clients, using its [MCP plugin](https://www.better-auth.com/docs/plugins/mcp) (`@better-auth/mcp`), the JWT plugin and [Client ID Metadata Documents](https://www.better-auth.com/docs/plugins/cimd) (`@better-auth/cimd`). Dynamic client registration is **off**; clients identify themselves with a metadata document URL (CIMD).
 - The only way to sign in is **Sign in with Google**. Google is asked for the `webmasters.readonly` scope with offline access, and Better Auth stores the Google tokens per user in Postgres, encrypted (`account.encryptOAuthTokens`), and refreshes them when they expire.
 - `POST /mcp` without a valid access token gets `401` with an RFC 9728 `WWW-Authenticate: Bearer resource_metadata="https://<your-domain>/.well-known/oauth-protected-resource/mcp"` challenge, which is how clients discover the authorisation server. Access tokens are JWTs bound to the `https://<your-domain>/mcp` resource and verified against the server's JWKS.
-- Only Google-verified email addresses in `ALLOWED_EMAILS` can create an account, and the allow-list is checked again on every MCP request.
 - The MCP endpoint is stateless (the SDK's `createMcpHandler`): it serves MCP **2026-07-28** and, statelessly, 2025-era requests from clients on the earlier protocol.
 
 All routes are served by one [Hono](https://hono.dev) app, `src/index.ts`:
@@ -117,7 +116,6 @@ Vercel runs the Hono app in `src/index.ts` as a single function ([Hono on Vercel
 | `BETTER_AUTH_URL` | Yes | Public origin of the deployment, e.g. `https://gsc.example.com`. The MCP resource is `<BETTER_AUTH_URL>/mcp` and must be exactly the URL clients use. |
 | `GOOGLE_CLIENT_ID` | Yes | Web application OAuth client ID. |
 | `GOOGLE_CLIENT_SECRET` | Yes | Web application OAuth client secret. |
-| `ALLOWED_EMAILS` | Yes | Comma-separated Google account emails allowed to sign in (case-insensitive). Empty or unset means nobody can. |
 | `MCP_ALLOWED_HOSTS` | No | Comma-separated extra hostnames accepted in the `Host` header of `/mcp`. The `BETTER_AUTH_URL` host and Vercel's `VERCEL_URL`, `VERCEL_BRANCH_URL` and `VERCEL_PROJECT_PRODUCTION_URL` are always accepted. |
 | `MCP_ALLOWED_ORIGINS` | No | Comma-separated hostnames allowed in a browser `Origin` header on `/mcp` (requests without `Origin`, as sent by non-browser clients, pass). |
 | `LOG_LEVEL` | No | Pino level (`info` by default). Logs go to stderr; tokens, secrets, cookies and `Authorization` headers are redacted. |
@@ -133,7 +131,6 @@ Vercel runs the Hono app in `src/index.ts` as a single function ([Hono on Vercel
    vercel env add BETTER_AUTH_URL production
    vercel env add GOOGLE_CLIENT_ID production
    vercel env add GOOGLE_CLIENT_SECRET production
-   vercel env add ALLOWED_EMAILS production
    ```
 
 4. Deploy with `vercel deploy --prod`, or push to the branch connected through the Git integration.
@@ -188,7 +185,7 @@ Not verified yet: start the web UI with `pnpm dlx @modelcontextprotocol/inspecto
 
 ## Security considerations
 
-- Anyone in `ALLOWED_EMAILS` who signs in can read the Search Console properties **their own** Google account has access to; nobody else can create an account. Removing an email blocks that user's next MCP request, even with an unexpired access token.
+- Anyone who can sign in with Google can use the server, and each user only reads the Search Console properties **their own** Google account has access to. While the Google OAuth app is in *Testing*, only its listed test users can sign in.
 - Each MCP client must be approved on the consent page, which shows the client's name, the signed-in account and the host it will redirect to. Only approve clients you started yourself.
 - Only the read-only Search Console scope is requested from Google. MCP access tokens are short-lived JWTs (1 hour) bound to the `/mcp` resource; refresh tokens rotate.
 - Google access and refresh tokens are encrypted at rest with a key derived from `BETTER_AUTH_SECRET`. Keep that secret and `DATABASE_URL` private; rotating the secret means everyone signs in again.
