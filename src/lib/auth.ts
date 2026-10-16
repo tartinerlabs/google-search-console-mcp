@@ -36,6 +36,9 @@ export const auth = betterAuth({
     mcp({
       loginPage: "/sign-in",
       consentPage: "/consent",
+      // An existing session and stored consent would otherwise authorise
+      // silently; always go through Google's account chooser instead.
+      selectAccount: { page: "/sign-in", shouldRedirect: () => true },
       resource,
     }),
     cimd({
