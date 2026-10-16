@@ -7,13 +7,6 @@ import { jwt } from "better-auth/plugins/jwt";
 import { type Env, SCOPES } from "../google/auth.ts";
 import { logger } from "../utils/logger.ts";
 
-const REQUIRED_ENV = [
-  "BETTER_AUTH_URL",
-  "BETTER_AUTH_SECRET",
-  "GOOGLE_CLIENT_ID",
-  "GOOGLE_CLIENT_SECRET",
-] as const;
-
 /** Paths of the two pages served next to the auth API (see api/sign-in.ts and api/consent.ts). */
 const SIGN_IN_PATH = "/sign-in";
 const CONSENT_PATH = "/consent";
@@ -69,19 +62,11 @@ export function authOptions(
   env: Env,
   database: NonNullable<BetterAuthOptions["database"]>,
 ) {
-  const missing = REQUIRED_ENV.filter((key) => !env[key]);
-  if (missing.length > 0) {
-    throw new Error(
-      `Missing required environment variables: ${missing.join(", ")}`,
-    );
-  }
-
   return {
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     database,
     logger: {
-      level: "warn",
       // Route Better Auth's logs to Pino on stderr. Extra arguments are dropped:
       // they can carry request data, and only the message is needed.
       log: (level, message, ...args) => {
@@ -98,15 +83,16 @@ export function authOptions(
     },
     socialProviders: {
       google: {
-        clientId: env.GOOGLE_CLIENT_ID ?? "",
+        clientId: env.GOOGLE_CLIENT_ID as string,
         clientSecret: env.GOOGLE_CLIENT_SECRET,
         scope: SCOPES,
         // A refresh token is needed so tools keep working after the first hour.
         accessType: "offline",
-        prompt: "consent",
+        prompt: "select_account consent",
       },
     },
     account: { encryptOAuthTokens: true },
+    advanced: { database: { generateId: "uuid" } },
     databaseHooks: {
       user: {
         create: {
