@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "types": ["node"],
+    "module": "esnext",
     "strict": true,
     "noEmit": true,
     "rewriteRelativeImportExtensions": true,
