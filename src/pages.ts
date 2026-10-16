@@ -175,6 +175,7 @@ export async function consentPage(request: Request): Promise<Response> {
 <p>After you allow it, you will be sent to <code>${escapeHtml(redirectTarget)}</code>.</p>
 <p>Client ID: <code>${escapeHtml(clientId)}</code></p>
 <p><button type="button" data-accept="true">Allow</button><button type="button" data-accept="false">Deny</button></p>
+<p><a href="/sign-in?${escapeHtml(oauthQuery)}">Use a different Google account</a></p>
 <p id="error" hidden>Something went wrong. Start again from your MCP client.</p>
 <script>${CONSENT_SCRIPT}</script>`,
     CONSENT_SCRIPT_HASH,
