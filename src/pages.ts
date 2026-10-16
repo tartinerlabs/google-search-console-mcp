@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { verifyOAuthQueryParams } from "@better-auth/oauth-provider";
-import type { Auth } from "./auth/create-auth.ts";
+import { auth } from "./lib/auth.ts";
 import { logger } from "./utils/logger.ts";
 
 /**
@@ -88,105 +88,95 @@ ${body}
 const INVALID_LINK =
   "<p>This link is invalid or has expired. Start again from your MCP client.</p>";
 
-async function signedQuery(
-  auth: Auth,
-  request: Request,
-): Promise<string | undefined> {
+async function signedQuery(request: Request): Promise<string | undefined> {
   const query = new URL(request.url).search.slice(1);
   const { secret } = await auth.$context;
   return (await verifyOAuthQueryParams(query, secret)) ? query : undefined;
 }
 
 /**
- * GET /sign-in: there is nothing to choose, so start "Sign in with Google"
+ * GET /api/sign-in: there is nothing to choose, so start "Sign in with Google"
  * straight away. Better Auth keeps the signed authorisation request in the
  * Google OAuth state and resumes it after the Google callback.
  */
-export function createSignInHandler(auth: Auth) {
-  return async function fetch(request: Request): Promise<Response> {
-    const oauthQuery = await signedQuery(auth, request);
-    if (!oauthQuery) return page(400, "Sign-in link expired", INVALID_LINK);
+export async function signInPage(request: Request): Promise<Response> {
+  const oauthQuery = await signedQuery(request);
+  if (!oauthQuery) return page(400, "Sign-in link expired", INVALID_LINK);
 
-    // `oauth_query` is read by the OAuth provider plugin's before-hook, which
-    // stores the signed authorisation request in the Google OAuth state; the
-    // core sign-in body type does not declare it, hence the separate object.
-    const body = { provider: "google", oauth_query: oauthQuery };
-    const response = await auth.api.signInSocial({
-      body,
-      headers: request.headers,
-      asResponse: true,
-    });
-    const data: unknown = await response.json().catch(() => undefined);
-    const url =
-      typeof data === "object" && data !== null && "url" in data
-        ? data.url
-        : undefined;
-    if (!response.ok || typeof url !== "string") {
-      logger.warn(
-        { status: response.status },
-        "Google sign-in could not start",
-      );
-      return page(
-        502,
-        "Sign-in failed",
-        "<p>Google sign-in could not be started. Try again later.</p>",
-      );
-    }
+  // `oauth_query` is read by the OAuth provider plugin's before-hook, which
+  // stores the signed authorisation request in the Google OAuth state; the
+  // core sign-in body type does not declare it, hence the separate object.
+  const body = { provider: "google", oauth_query: oauthQuery };
+  const response = await auth.api.signInSocial({
+    body,
+    headers: request.headers,
+    asResponse: true,
+  });
+  const data: unknown = await response.json().catch(() => undefined);
+  const url =
+    typeof data === "object" && data !== null && "url" in data
+      ? data.url
+      : undefined;
+  if (!response.ok || typeof url !== "string") {
+    logger.warn({ status: response.status }, "Google sign-in could not start");
+    return page(
+      502,
+      "Sign-in failed",
+      "<p>Google sign-in could not be started. Try again later.</p>",
+    );
+  }
 
-    const headers = new Headers({ location: url, "cache-control": "no-store" });
-    for (const cookie of response.headers.getSetCookie()) {
-      headers.append("set-cookie", cookie);
-    }
-    return new Response(null, { status: 302, headers });
-  };
+  const headers = new Headers({ location: url, "cache-control": "no-store" });
+  for (const cookie of response.headers.getSetCookie()) {
+    headers.append("set-cookie", cookie);
+  }
+  return new Response(null, { status: 302, headers });
 }
 
 /**
- * GET /consent: show which client is asking and where it will be sent, and
+ * GET /api/consent: show which client is asking and where it will be sent, and
  * post the user's decision to Better Auth's consent endpoint.
  */
-export function createConsentHandler(auth: Auth) {
-  return async function fetch(request: Request): Promise<Response> {
-    const oauthQuery = await signedQuery(auth, request);
-    if (!oauthQuery) return page(400, "Consent link expired", INVALID_LINK);
+export async function consentPage(request: Request): Promise<Response> {
+  const oauthQuery = await signedQuery(request);
+  if (!oauthQuery) return page(400, "Consent link expired", INVALID_LINK);
 
-    const session = await auth.api.getSession({ headers: request.headers });
-    if (!session) {
-      return page(
-        401,
-        "Not signed in",
-        "<p>Your session has ended. Start again from your MCP client.</p>",
-      );
-    }
-
-    const params = new URLSearchParams(oauthQuery);
-    const clientId = params.get("client_id") ?? "";
-    let redirectTarget = "";
-    try {
-      const redirect = new URL(params.get("redirect_uri") ?? "");
-      // Private-use schemes (com.example.app:/cb) have no host: show the whole URI.
-      redirectTarget = redirect.host || redirect.href;
-    } catch {
-      return page(400, "Invalid request", INVALID_LINK);
-    }
-    const client = await auth.api
-      .getOAuthClientPublic({
-        query: { client_id: clientId },
-        headers: request.headers,
-      })
-      .catch(() => undefined);
-    const clientName = client?.client_name ?? clientId;
-
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session) {
     return page(
-      200,
-      "Allow access?",
-      `<p><strong>${escapeHtml(clientName)}</strong> wants to use this Google Search Console MCP server as <strong>${escapeHtml(session.user.email)}</strong>, with read-only access to your Search Console data.</p>
+      401,
+      "Not signed in",
+      "<p>Your session has ended. Start again from your MCP client.</p>",
+    );
+  }
+
+  const params = new URLSearchParams(oauthQuery);
+  const clientId = params.get("client_id") ?? "";
+  let redirectTarget = "";
+  try {
+    const redirect = new URL(params.get("redirect_uri") ?? "");
+    // Private-use schemes (com.example.app:/cb) have no host: show the whole URI.
+    redirectTarget = redirect.host || redirect.href;
+  } catch {
+    return page(400, "Invalid request", INVALID_LINK);
+  }
+  const client = await auth.api
+    .getOAuthClientPublic({
+      query: { client_id: clientId },
+      headers: request.headers,
+    })
+    .catch(() => undefined);
+  const clientName = client?.client_name ?? clientId;
+
+  return page(
+    200,
+    "Allow access?",
+    `<p><strong>${escapeHtml(clientName)}</strong> wants to use this Google Search Console MCP server as <strong>${escapeHtml(session.user.email)}</strong>, with read-only access to your Search Console data.</p>
 <p>After you allow it, you will be sent to <code>${escapeHtml(redirectTarget)}</code>.</p>
 <p>Client ID: <code>${escapeHtml(clientId)}</code></p>
 <p><button type="button" data-accept="true">Allow</button><button type="button" data-accept="false">Deny</button></p>
 <p id="error" hidden>Something went wrong. Start again from your MCP client.</p>
 <script>${CONSENT_SCRIPT}</script>`,
-      CONSENT_SCRIPT_HASH,
-    );
-  };
+    CONSENT_SCRIPT_HASH,
+  );
 }

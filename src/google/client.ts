@@ -2,7 +2,10 @@ import {
   searchconsole,
   type searchconsole_v1,
 } from "@googleapis/searchconsole";
-import type { OAuth2Client } from "google-auth-library";
+import { isAPIError } from "better-auth/api";
+import { OAuth2Client } from "google-auth-library";
+import { auth, SCOPES } from "../lib/auth.ts";
+import { CredentialsError } from "../utils/errors.ts";
 
 type SearchAnalyticsRequest =
   searchconsole_v1.Schema$SearchAnalyticsQueryRequest;
@@ -48,4 +51,46 @@ export function createGscClient(auth: OAuth2Client): GscClient {
         .data;
     },
   };
+}
+
+/** A Search Console client acting as the given Better Auth user. */
+export async function getUserGscClient(userId: string): Promise<GscClient> {
+  const { internalAdapter } = await auth.$context;
+  const account = (await internalAdapter.findAccounts(userId)).find(
+    (candidate) => candidate.providerId === "google",
+  );
+  if (!account) {
+    throw new CredentialsError("No Google account is linked to this sign-in.");
+  }
+
+  // Google's granular consent lets the user untick the Search Console permission.
+  const granted = new Set((account.scope ?? "").split(/[\s,]+/));
+  if (!SCOPES.every((scope) => granted.has(scope))) {
+    throw new CredentialsError(
+      "Google did not grant access to Search Console data (the permission was not ticked on Google's consent screen).",
+    );
+  }
+
+  let accessToken: string | undefined;
+  try {
+    // Refreshes the token first when it has expired.
+    ({ accessToken } = await auth.api.getAccessToken({
+      body: { accountId: account.id, userId },
+    }));
+  } catch (error) {
+    if (isAPIError(error)) {
+      throw new CredentialsError(
+        "Google refused to renew access: it has expired or been revoked. " +
+          "Refresh tokens for OAuth apps in 'Testing' publishing status expire after 7 days.",
+      );
+    }
+    throw error;
+  }
+  if (!accessToken) {
+    throw new CredentialsError("No Google access token is stored.");
+  }
+
+  const client = new OAuth2Client();
+  client.setCredentials({ access_token: accessToken });
+  return createGscClient(client);
 }

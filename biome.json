@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!drizzle", "!src/auth/schema.ts"]
+    "includes": ["**", "!drizzle", "!src/db/schema.ts"]
   },
   "formatter": {
     "enabled": true,

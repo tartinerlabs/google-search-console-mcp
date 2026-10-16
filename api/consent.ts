@@ -1,5 +1,4 @@
-// Vercel Function for the OAuth consent page (`/consent` is rewritten here).
-import { auth } from "../src/auth/index.ts";
-import { createConsentHandler } from "../src/pages.ts";
+// Vercel Function for the OAuth consent page.
+import { consentPage } from "../src/pages.ts";
 
-export const GET = createConsentHandler(auth);
+export const GET = consentPage;
