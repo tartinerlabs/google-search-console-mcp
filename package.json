@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "vercel-build": "pnpm build && pnpm db:migrate",
+    "vercel-build": "pnpm db:migrate",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write .",
@@ -32,6 +32,7 @@
     "better-call": "1.4.2",
     "drizzle-orm": "1.0.0-rc.4",
     "google-auth-library": "11.3.0",
+    "hono": "4.13.13",
     "pg": "8.23.1",
     "pino": "10.4.0",
     "zod": "4.6.7"

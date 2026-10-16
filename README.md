@@ -36,21 +36,21 @@ Values follow the [Search Analytics API reference](https://developers.google.com
 
 ## How it works
 
-- [Better Auth](https://www.better-auth.com) 1.7 acts as the OAuth 2.1 authorisation server for MCP clients, using its [MCP plugin](https://www.better-auth.com/docs/plugins/mcp) (`@better-auth/mcp`), the JWT plugin and [Client ID Metadata Documents](https://www.better-auth.com/docs/plugins/cimd) (`@better-auth/cimd`). Dynamic client registration is **off**; clients identify themselves with a metadata document URL (CIMD), and only the authorisation-code (PKCE S256) and refresh-token grants are enabled.
+- [Better Auth](https://www.better-auth.com) 1.7 acts as the OAuth 2.1 authorisation server for MCP clients, using its [MCP plugin](https://www.better-auth.com/docs/plugins/mcp) (`@better-auth/mcp`), the JWT plugin and [Client ID Metadata Documents](https://www.better-auth.com/docs/plugins/cimd) (`@better-auth/cimd`). Dynamic client registration is **off**; clients identify themselves with a metadata document URL (CIMD).
 - The only way to sign in is **Sign in with Google**. Google is asked for the `webmasters.readonly` scope with offline access, and Better Auth stores the Google tokens per user in Postgres, encrypted (`account.encryptOAuthTokens`), and refreshes them when they expire.
-- `POST /mcp` without a valid access token gets `401` with an RFC 9728 `WWW-Authenticate: Bearer resource_metadata="https://<your-domain>/api/auth/oauth-protected-resource/mcp"` challenge, which is how clients discover the authorisation server. The metadata is served under `/api/auth` rather than `/.well-known` because Vercel's documentation says `/.well-known` cannot be rewritten to a function. Access tokens are JWTs bound to the `https://<your-domain>/mcp` resource and verified against the server's JWKS.
+- `POST /mcp` without a valid access token gets `401` with an RFC 9728 `WWW-Authenticate: Bearer resource_metadata="https://<your-domain>/.well-known/oauth-protected-resource/mcp"` challenge, which is how clients discover the authorisation server. Access tokens are JWTs bound to the `https://<your-domain>/mcp` resource and verified against the server's JWKS.
 - Only Google-verified email addresses in `ALLOWED_EMAILS` can create an account, and the allow-list is checked again on every MCP request.
 - The MCP endpoint is stateless (the SDK's `createMcpHandler`): it serves MCP **2026-07-28** and, statelessly, 2025-era requests from clients on the earlier protocol.
 
-| Path | Served by | Purpose |
-| --- | --- | --- |
-| `/mcp` | `api/mcp.ts` (`POST` only) | MCP endpoint |
-| `/api/auth/*` | `api/auth.ts` | Better Auth: authorise, token, consent, JWKS, Google callback, metadata |
-| `/api/auth/oauth-protected-resource/mcp` | `api/auth.ts` | Protected resource metadata (RFC 9728), the URL named in the 401 challenge |
-| `/api/auth/.well-known/openid-configuration` | `api/auth.ts` | Authorisation server metadata |
-| `/.well-known/*` | `api/auth.ts` (rewrite, if Vercel honours it) | The same metadata at the RFC 8414 / RFC 9728 well-known paths; not relied on |
-| `/sign-in` | `api/sign-in.ts` | Starts Google sign-in straight away (no UI) |
-| `/consent` | `api/consent.ts` | Shows the client name, the account and the redirect host, with Allow / Deny |
+All routes are served by one [Hono](https://hono.dev) app, `src/index.ts`:
+
+| Path | Purpose |
+| --- | --- |
+| `POST /mcp` | MCP endpoint |
+| `/api/auth/*` | Better Auth: authorise, token, consent, JWKS, Google callback |
+| `/.well-known/*` | OAuth discovery metadata (RFC 8414, RFC 9728) from Better Auth |
+| `/sign-in` | Starts Google sign-in straight away (no UI) |
+| `/consent` | Shows the client name, the account and the redirect host, with Allow / Deny |
 
 ## Prerequisites
 
@@ -106,7 +106,7 @@ Expired or revoked Google access is reported to the client as an `[auth]` tool e
 
 ## Deploying to Vercel
 
-`vercel.json` uses the *Other* framework preset, rewrites the public paths to the functions above, and publishes only `public/` (a `robots.txt` that disallows crawling) as static files, so neither the repository nor `dist/` is served. Each function in `api/` is a Vercel Function on the Node.js runtime, compiled by Vercel from TypeScript.
+Vercel runs the Hono app in `src/index.ts` as a single function ([Hono on Vercel](https://vercel.com/docs/frameworks/backend/hono)); `vercel.ts` sets the `hono` framework and the region. Every build runs `pnpm db:migrate` (the `vercel-build` script).
 
 ### Environment variables
 
@@ -179,7 +179,7 @@ The tests need no database, network or Google credentials. The OAuth tests run a
 ## Production build
 
 ```sh
-pnpm build        # tsc emits dist/ (Vercel runs this too)
+pnpm build        # tsc emits dist/
 ```
 
 ## Testing with the MCP Inspector
@@ -199,7 +199,6 @@ Not verified yet: start the web UI with `pnpm dlx @modelcontextprotocol/inspecto
 ## Known limitations
 
 - Not yet verified end to end: a real deployment on Vercel and Neon, a real Google sign-in, real Search Console API calls, and a connection from Claude Code or another client (including fetching a real client metadata document). The rewrites rely on Vercel passing the original path in `request.url` to the function, as Vercel's documentation describes. After deploying, check discovery with `curl -i -X POST https://<your-domain>/mcp` (expect `401` and the `resource_metadata` URL), `curl https://<your-domain>/api/auth/oauth-protected-resource/mcp` and `curl https://<your-domain>/api/auth/.well-known/openid-configuration`.
-- Whether Vercel serves the `/.well-known/*` rewrite is unverified (its documentation says that path is reserved); clients that ignore `resource_metadata` and only try the root well-known paths may fail discovery.
 - `requireMcpAuth` downloads the JWKS from the deployment's own public URL. With Vercel Deployment Protection enabled (the default for preview deployments), that request and the OAuth flow are blocked; use the production deployment or turn protection off for previews.
 - The JWKS is fetched over HTTPS from the deployment itself on a cold start, which adds latency to the first request.
 - URL Inspection is limited by Google to 2,000 inspections per property per day; Search Analytics has load-based quotas. Quota errors are reported as `[quota]`.
