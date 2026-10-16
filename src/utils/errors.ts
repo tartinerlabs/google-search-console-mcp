@@ -29,8 +29,7 @@ interface ClassifiedError {
 }
 
 const LOGIN_HINT =
-  "Remote server: reconnect it in your MCP client to sign in with Google again. " +
-  "Local stdio server: set GSC_CREDENTIALS_PATH or GOOGLE_APPLICATION_CREDENTIALS to a credentials file.";
+  "Reconnect the server in your MCP client to sign in with Google again.";
 
 const QUOTA_REASONS = new Set([
   "quotaExceeded",
@@ -148,13 +147,6 @@ export function classifyError(error: unknown): ClassifiedError {
     status: info.status,
     reason: info.reasons[0] ?? info.oauthError,
   };
-
-  if (message.startsWith("Could not load the default credentials")) {
-    return {
-      kind: "auth",
-      message: `No Google credentials were found. ${LOGIN_HINT}`,
-    };
-  }
 
   if (info.oauthError === "invalid_grant" || message === "invalid_grant") {
     return {
