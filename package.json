@@ -22,15 +22,23 @@
     "check": "pnpm typecheck && pnpm lint && pnpm test"
   },
   "dependencies": {
+    "@better-auth/cimd": "1.7.10",
+    "@better-auth/core": "1.7.10",
+    "@better-auth/mcp": "1.7.10",
+    "@better-auth/oauth-provider": "1.7.10",
     "@googleapis/searchconsole": "11.0.1",
     "@modelcontextprotocol/server": "2.3.1",
+    "better-auth": "1.7.10",
+    "better-call": "1.4.2",
     "google-auth-library": "11.3.0",
+    "pg": "8.23.1",
     "pino": "10.4.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@types/node": "26.6.5",
+    "@types/pg": "8.23.1",
     "typescript": "7.0.2",
     "vite": "8.3.4",
     "vitest": "5.0.5"

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "pnpm build",
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/mcp", "destination": "/api/mcp" },
+    { "source": "/api/auth/:path*", "destination": "/api/auth" },
+    { "source": "/.well-known/:path*", "destination": "/api/auth" },
+    { "source": "/sign-in", "destination": "/api/sign-in" },
+    { "source": "/consent", "destination": "/api/consent" }
+  ]
+}
