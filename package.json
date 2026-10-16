@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "auth:generate": "auth generate --output src/db/schema/auth.ts --yes",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push"
@@ -40,6 +41,7 @@
     "@types/node": "26.6.5",
     "@types/pg": "8.23.1",
     "@vercel/config": "0.12.0",
+    "auth": "1.7.10",
     "drizzle-kit": "1.0.0-rc.4",
     "typescript": "7.0.2",
     "vite": "8.3.4",
