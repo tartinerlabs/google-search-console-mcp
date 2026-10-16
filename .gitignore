@@ -6,3 +6,5 @@ credentials.json
 client_secret*.json
 *.pem
 *.key
+.neon
+.vercel

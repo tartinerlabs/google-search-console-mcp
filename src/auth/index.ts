@@ -1,12 +1,18 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
+import { attachDatabasePool } from "@vercel/functions";
 import { defineRelations } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { createAuth } from "./create-auth.ts";
 import * as schema from "./schema.ts";
 
-/** Drizzle over a `pg` Pool (e.g. Neon's pooled connection string). */
+/** A `pg` Pool over Neon's pooled connection string. */
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Lets Vercel Fluid compute close idle connections before suspending the instance.
+attachDatabasePool(pool);
+
 const db = drizzle({
-  connection: { connectionString: process.env.DATABASE_URL },
+  client: pool,
   relations: { ...defineRelations(schema), ...schema.authRelations },
 });
 
