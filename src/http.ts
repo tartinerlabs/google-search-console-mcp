@@ -6,7 +6,7 @@ import {
   originValidationResponse,
 } from "@modelcontextprotocol/server";
 import { getUserGscClient } from "./google/client.ts";
-import { auth, isUserAllowed, resource } from "./lib/auth.ts";
+import { auth, resource } from "./lib/auth.ts";
 import { createServer } from "./server.ts";
 import { CredentialsError } from "./utils/errors.ts";
 import { logger } from "./utils/logger.ts";
@@ -26,13 +26,6 @@ const allowedHostnames = [
   ...list(process.env.VERCEL_BRANCH_URL),
   ...list(process.env.VERCEL_PROJECT_PRODUCTION_URL),
 ];
-
-function forbidden(message: string): Response {
-  return Response.json(
-    { jsonrpc: "2.0", error: { code: -32003, message }, id: null },
-    { status: 403 },
-  );
-}
 
 /** The raw access token (Bearer or DPoP scheme) already verified by requireMcpAuth. */
 function presentedToken(request: Request): string {
@@ -62,26 +55,14 @@ const handler = createMcpHandler(
 
 const authorised = requireMcpAuth(
   auth,
-  async (request, claims) => {
-    const userId = claims.sub;
-    const user = userId
-      ? await (await auth.$context).internalAdapter.findUserById(userId)
-      : null;
-    // Re-checked on every request so removing an email takes effect before
-    // already-issued access tokens expire.
-    if (!userId || !user || !isUserAllowed(user)) {
-      logger.warn(
-        "MCP request refused: user is unverified or not in ALLOWED_EMAILS",
-      );
-      return forbidden("This account is not allowed to use this server.");
-    }
+  (request, claims) => {
     const authInfo: AuthInfo = {
       token: presentedToken(request),
       clientId: String(claims.azp ?? claims.client_id ?? ""),
       scopes: typeof claims.scope === "string" ? claims.scope.split(" ") : [],
       expiresAt: claims.exp,
       resource: new URL(resource),
-      extra: { userId },
+      extra: { userId: claims.sub },
     };
     return handler.fetch(request, { authInfo });
   },
@@ -90,8 +71,7 @@ const authorised = requireMcpAuth(
 
 /**
  * The MCP endpoint: Host/Origin validation, then Better Auth's
- * `requireMcpAuth`, then the allow-list check of the token's user, then the
- * stateless MCP handler acting as that user.
+ * `requireMcpAuth`, then the stateless MCP handler acting as the token's user.
  */
 export async function handleMcp(request: Request): Promise<Response> {
   const badHost = hostHeaderValidationResponse(request, allowedHostnames);
