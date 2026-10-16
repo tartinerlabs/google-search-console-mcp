@@ -1,7 +1,22 @@
 import { createMcpHandler } from "@modelcontextprotocol/server";
+import type { GscClient, GscClientProvider } from "../src/google/client.ts";
 import { createServer } from "../src/server.ts";
 
 export const PROTOCOL_VERSION = "2026-07-28";
+
+export function mockClient(
+  overrides: Partial<GscClient> = {},
+): GscClientProvider {
+  const notMocked = () => Promise.reject(new Error("not mocked"));
+  const client: GscClient = {
+    listSites: notMocked,
+    listSitemaps: notMocked,
+    querySearchAnalytics: notMocked,
+    inspectUrl: notMocked,
+    ...overrides,
+  };
+  return () => client;
+}
 
 /** A 2026-07-28 (modern, stateless) MCP request: per-request `_meta` envelope plus the standard headers. */
 export function mcpRequest(
@@ -46,9 +61,9 @@ export async function readMessage(response: Response) {
   return JSON.parse(data ?? text);
 }
 
-/** Call the shared server factory over the SDK's stateless handler (no network). */
-export function createTestClient() {
-  const handler = createMcpHandler(() => createServer(), {
+/** Call the shared server factory over the SDK's stateless handler (no auth, no network). */
+export function createTestClient(getClient: GscClientProvider = mockClient()) {
+  const handler = createMcpHandler(() => createServer(getClient), {
     legacy: "reject",
   });
   const rpc = async (method: string, params: Record<string, unknown> = {}) =>
@@ -59,4 +74,16 @@ export function createTestClient() {
     return { isError: message.result.isError === true, text };
   };
   return { rpc, callTool };
+}
+
+/** A GaxiosError-shaped value as thrown by googleapis on HTTP errors. */
+export function googleError(
+  status: number,
+  data: unknown,
+  message = "Request failed",
+): Error {
+  return Object.assign(new Error(message), {
+    status,
+    response: { status, data },
+  });
 }
