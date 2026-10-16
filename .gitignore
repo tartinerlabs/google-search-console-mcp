@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.vercel/
+.env*
+credentials.json
+client_secret*.json
+*.pem
+*.key
