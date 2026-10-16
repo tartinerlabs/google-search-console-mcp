@@ -6,7 +6,7 @@ import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { jwt } from "better-auth/plugins";
 import { db } from "../db/index.ts";
-import * as schema from "../db/schema.ts";
+import * as schema from "../db/schema/auth.ts";
 
 /** Google scope for read-only Search Console access. */
 export const SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"];
