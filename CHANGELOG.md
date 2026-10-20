@@ -1,3 +1,10 @@
+## [0.6.1](https://github.com/tartinerlabs/mcp/compare/v0.6.0...v0.6.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* always show google account chooser ([b6a13d1](https://github.com/tartinerlabs/mcp/commit/b6a13d1df28670a237a7d9b9576faa1746f824e0))
+
 # [0.6.0](https://github.com/tartinerlabs/mcp/compare/v0.5.0...v0.6.0) (2026-10-20)
 
 
