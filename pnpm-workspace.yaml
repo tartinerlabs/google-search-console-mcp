@@ -1,5 +1,7 @@
 packages:
   - "apps/*"
-savePrefix: ""
+
 allowBuilds:
   esbuild: false
+
+savePrefix: ""
