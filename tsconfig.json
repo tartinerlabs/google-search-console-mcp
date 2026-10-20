@@ -11,6 +11,5 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "skipLibCheck": true
-  },
-  "files": []
+  }
 }
