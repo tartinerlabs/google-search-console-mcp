@@ -1,0 +1,60 @@
+{
+  "name": "@tartinerlabs/google-search-console-mcp",
+  "version": "0.1.0",
+  "description": "Unofficial Model Context Protocol server for Google Search Console, with Sign in with Google (OAuth 2.1 via Better Auth) on Vercel.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "vercel-build": "pnpm db:migrate",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "pnpm typecheck && pnpm test",
+    "auth:generate": "auth generate --output src/db/schema/auth.ts --yes",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "@better-auth/cimd": "1.7.10",
+    "@better-auth/core": "1.7.10",
+    "@better-auth/drizzle-adapter": "1.7.10",
+    "@better-auth/mcp": "1.7.10",
+    "@better-auth/oauth-provider": "1.7.10",
+    "@googleapis/searchconsole": "11.0.1",
+    "@modelcontextprotocol/server": "2.3.1",
+    "@neon/config": "1.9.1",
+    "@neon/env": "1.6.2",
+    "better-auth": "1.7.10",
+    "better-call": "1.4.2",
+    "drizzle-orm": "1.0.0-rc.4",
+    "google-auth-library": "11.3.0",
+    "hono": "4.13.13",
+    "pg": "8.23.1",
+    "pino": "10.4.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/pg": "8.23.1",
+    "@vercel/config": "0.12.0",
+    "auth": "1.7.10",
+    "drizzle-kit": "1.0.0-rc.4",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.14.0",
+      "onFail": "download"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "26.8.2",
+      "onFail": "download"
+    }
+  }
+}

@@ -165,6 +165,18 @@ settings:
 importers:
 
   .:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: 2.5.15
+        version: 2.5.15
+      node:
+        specifier: runtime:26.8.2
+        version: runtime:26.8.2
+      semantic-release:
+        specifier: 25.0.9
+        version: 25.0.9(supports-color@7.2.0)(typescript@7.0.2)
+
+  apps/gsc:
     dependencies:
       '@better-auth/cimd':
         specifier: 1.7.10
@@ -218,9 +230,6 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
     devDependencies:
-      '@biomejs/biome':
-        specifier: 2.5.15
-        version: 2.5.15
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -239,9 +248,6 @@ importers:
       node:
         specifier: runtime:26.8.2
         version: runtime:26.8.2
-      semantic-release:
-        specifier: 25.0.9
-        version: 25.0.9(supports-color@7.2.0)(typescript@7.0.2)
       typescript:
         specifier: 7.0.2
         version: 7.0.2
