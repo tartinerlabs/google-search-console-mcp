@@ -30,7 +30,7 @@ const inputSchema = z
   })
   .refine(hasExactlyOneTarget, { message: TARGET_MESSAGE, path: ["url"] });
 
-export function summariseHistory(response: CruxHistoryResponse) {
+function summariseHistory(response: CruxHistoryResponse) {
   const p75s: Record<string, (number | null)[]> = {};
   for (const [name, metric] of Object.entries(response.record.metrics)) {
     const series = metric.percentilesTimeseries?.p75s;

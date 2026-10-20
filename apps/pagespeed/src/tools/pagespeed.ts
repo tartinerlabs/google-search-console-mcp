@@ -58,7 +58,7 @@ function savings(audit: LighthouseAudit) {
 }
 
 /** Turn a multi-megabyte Lighthouse report into scores, lab metrics and the most impactful failing audits. */
-export function summariseLighthouse(
+function summariseLighthouse(
   result: LighthouseResult,
   categories: Category[],
   maxFindings: number,

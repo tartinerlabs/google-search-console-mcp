@@ -33,7 +33,7 @@ export interface GscClient {
  */
 export type GscClientProvider = () => GscClient | Promise<GscClient>;
 
-export function createGscClient(auth: OAuth2Client): GscClient {
+function createGscClient(auth: OAuth2Client): GscClient {
   const api = searchconsole({ version: "v1", auth });
   return {
     async listSites() {

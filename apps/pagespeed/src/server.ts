@@ -6,7 +6,7 @@ import { registerCruxHistoryTool } from "./tools/crux-history.ts";
 import { registerPagespeedTool } from "./tools/pagespeed.ts";
 
 const SERVER_NAME = "pagespeed";
-export const SERVER_VERSION = "0.1.0";
+const SERVER_VERSION = "0.1.0";
 
 /** Server factory for the HTTP handler. */
 export function createServer(getClient: PageSpeedClientProvider): McpServer {

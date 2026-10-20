@@ -61,7 +61,7 @@ function rate(p75: number | null, edges: (number | null)[]) {
   return "poor";
 }
 
-export function summariseRecord(response: CruxRecordResponse) {
+function summariseRecord(response: CruxRecordResponse) {
   const metrics: Record<string, unknown> = {};
   for (const [name, metric] of Object.entries(response.record.metrics)) {
     const histogram = metric.histogram ?? [];

@@ -5,7 +5,7 @@ import type {
 } from "../src/google/client.ts";
 import { createServer } from "../src/server.ts";
 
-export const PROTOCOL_VERSION = "2026-07-28";
+const PROTOCOL_VERSION = "2026-07-28";
 
 export function mockClient(
   overrides: Partial<PageSpeedClient> = {},
@@ -21,7 +21,7 @@ export function mockClient(
 }
 
 /** A 2026-07-28 (modern, stateless) MCP request: per-request `_meta` envelope plus the standard headers. */
-export function mcpRequest(
+function mcpRequest(
   method: string,
   params: Record<string, unknown> = {},
 ): Request {
@@ -51,7 +51,7 @@ export function mcpRequest(
 }
 
 /** Parse a JSON-RPC message from a JSON or single-event SSE response body. */
-export async function readMessage(response: Response) {
+async function readMessage(response: Response) {
   const text = await response.text();
   const data = text
     .split("\n")
