@@ -10,3 +10,5 @@ client_secret*.json
 .neon
 .vercel
 .claude/
+.agents/
+.grok/
