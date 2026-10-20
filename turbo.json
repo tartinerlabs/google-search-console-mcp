@@ -5,7 +5,14 @@
     "build": {
       "outputs": ["dist/**"]
     },
-    "typecheck": {},
-    "test": {}
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
+    "typecheck": {
+      "dependsOn": ["transit"]
+    },
+    "test": {
+      "dependsOn": ["transit"]
+    }
   }
 }

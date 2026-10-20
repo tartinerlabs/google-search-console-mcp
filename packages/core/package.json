@@ -1,0 +1,29 @@
+{
+  "name": "@tartinerlabs/mcp-core",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    "./auth": "./src/auth.ts",
+    "./http": "./src/http.ts",
+    "./logger": "./src/logger.ts",
+    "./pages": "./src/pages.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@better-auth/cimd": "1.7.10",
+    "@better-auth/drizzle-adapter": "1.7.10",
+    "@better-auth/mcp": "1.7.10",
+    "@better-auth/oauth-provider": "1.7.10",
+    "@modelcontextprotocol/server": "2.3.1",
+    "better-auth": "1.7.10",
+    "drizzle-orm": "1.0.0-rc.4",
+    "pino": "10.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "typescript": "7.0.2"
+  }
+}
