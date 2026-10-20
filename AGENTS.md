@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Commands
 
-pnpm only (`pnpm-lock.yaml`, pnpm 12 and Node declared in `devEngines`). pnpm workspace with Turborepo (`turbo.json`): the Google Search Console server lives in `apps/gsc`, provider-neutral auth/HTTP code shared by apps lives in `packages/core` (`@repo/core`, exported as `.ts` source with no build step), and Biome and semantic-release run from the root. Each app's `biome.json` and `turbo.json` extend the root ones (`"extends": "//"` / `["//"]`); declare an app's env vars in its own `turbo.json` (Turborepo runs in strict env mode). Paths and app commands below are relative to `apps/gsc` unless noted.
+pnpm only (`pnpm-lock.yaml`, pnpm 12 and Node declared in `devEngines`). pnpm workspace with Turborepo (`turbo.json`): the Google Search Console server lives in `apps/gsc`, the PageSpeed Insights + Chrome UX Report server in `apps/pagespeed` (same structure, tools call Google with the server's `GOOGLE_API_KEY`), provider-neutral auth/HTTP code shared by apps lives in `packages/core` (`@repo/core`, compiled to `dist/` because Vercel does not compile workspace TypeScript; types resolve to `src/`), and Biome and semantic-release run from the root. Each app's `biome.json` and `turbo.json` extend the root ones (`"extends": "//"` / `["//"]`); declare an app's env vars in its own `turbo.json` (Turborepo runs in strict env mode). Paths and app commands below are relative to `apps/gsc` unless noted.
 
 ```sh
 pnpm check                          # root: biome lint + turbo typecheck/test — what CI runs, plus `pnpm build`
@@ -47,4 +47,4 @@ Drizzle ORM 1.0 RC on Neon Postgres (`src/db/index.ts`, node-postgres, relations
 
 ## Environment
 
-Required: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (must exactly match the URL clients use for `/mcp`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. Optional: `MCP_ALLOWED_HOSTS`, `MCP_ALLOWED_ORIGINS`, `LOG_LEVEL`. See README for Google Cloud and Vercel setup. Vercel Deployment Protection blocks the self-hosted JWKS fetch and OAuth flow on preview deployments.
+Required: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (must exactly match the URL clients use for `/mcp`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. Optional: `MCP_ALLOWED_HOSTS`, `MCP_ALLOWED_ORIGINS`, `LOG_LEVEL`. `apps/pagespeed` also requires `GOOGLE_API_KEY` (PageSpeed Insights API and Chrome UX Report API enabled), sent as the `x-goog-api-key` header. See README for Google Cloud and Vercel setup. Vercel Deployment Protection blocks the self-hosted JWKS fetch and OAuth flow on preview deployments.
