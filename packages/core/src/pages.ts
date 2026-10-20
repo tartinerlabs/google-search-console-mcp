@@ -70,15 +70,36 @@ function page(
 <meta name="robots" content="noindex">
 <title>${escapeHtml(title)}</title>
 <style>
-body { font: 16px/1.5 system-ui, sans-serif; max-width: 32rem; margin: 3rem auto; padding: 0 1rem; color: #1f2328; background: #fff; }
-button { font: inherit; padding: 0.5rem 1.25rem; margin-right: 0.5rem; cursor: pointer; }
-code { word-break: break-all; }
-@media (prefers-color-scheme: dark) { body { color: #e6edf3; background: #0d1117; } }
+:root { color-scheme: light dark; --fg: #1f2328; --muted: #59636e; --bg: #f6f8fa; --card: #fff; --border: #d1d9e0; --accent: #1f6feb; --accent-fg: #fff; --danger: #d1242f; }
+@media (prefers-color-scheme: dark) { :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --card: #151b23; --border: #3d444d; --accent: #2f81f7; --danger: #f85149; } }
+* { box-sizing: border-box; }
+body { font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 1.5rem 1rem; color: var(--fg); background: var(--bg); }
+main { width: 100%; max-width: 28rem; padding: 2rem; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.08); }
+h1 { font-size: 1.375rem; line-height: 1.3; margin: 0 0 1rem; }
+p { margin: 0 0 1rem; }
+p:last-child { margin-bottom: 0; }
+dl { margin: 0 0 1.5rem; border: 1px solid var(--border); border-radius: 8px; }
+dl div { padding: 0.625rem 0.875rem; }
+dl div + div { border-top: 1px solid var(--border); }
+dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+dd { margin: 0; }
+code { font: 0.875rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+.actions { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; }
+button { flex: 1; font: inherit; font-weight: 600; padding: 0.625rem 1rem; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--fg); cursor: pointer; }
+button[data-accept="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+button:hover:not(:disabled) { filter: brightness(1.08); }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: 0.6; cursor: progress; }
+a { color: var(--accent); }
+.muted { font-size: 0.875rem; color: var(--muted); text-align: center; }
+#error { color: var(--danger); text-align: center; }
 </style>
 </head>
 <body>
+<main>
 <h1>${escapeHtml(title)}</h1>
 ${body}
+</main>
 </body>
 </html>`,
     {
@@ -190,12 +211,15 @@ export function createPages({
     return page(
       200,
       "Allow access?",
-      `<p><strong>${escapeHtml(clientName)}</strong> wants to use ${escapeHtml(serverName)} as <strong>${escapeHtml(session.user.email)}</strong>, with ${escapeHtml(access)}.</p>
-<p>After you allow it, you will be sent to <code>${escapeHtml(redirectTarget)}</code>.</p>
-<p>Client ID: <code>${escapeHtml(clientId)}</code></p>
-<p><button type="button" data-accept="true">Allow</button><button type="button" data-accept="false">Deny</button></p>
-<p><a href="/sign-in?${escapeHtml(oauthQuery)}">Use a different Google account</a></p>
+      `<p><strong>${escapeHtml(clientName)}</strong> wants to use ${escapeHtml(serverName)} with ${escapeHtml(access)}.</p>
+<dl>
+<div><dt>Signed in as</dt><dd>${escapeHtml(session.user.email)}</dd></div>
+<div><dt>Redirects to</dt><dd><code>${escapeHtml(redirectTarget)}</code></dd></div>
+<div><dt>Client ID</dt><dd><code>${escapeHtml(clientId)}</code></dd></div>
+</dl>
+<div class="actions"><button type="button" data-accept="false">Deny</button><button type="button" data-accept="true">Allow</button></div>
 <p id="error" hidden>Something went wrong. Start again from your MCP client.</p>
+<p class="muted"><a href="/sign-in?${escapeHtml(oauthQuery)}">Use a different Google account</a></p>
 <script>${CONSENT_SCRIPT}</script>`,
       CONSENT_SCRIPT_HASH,
     );
