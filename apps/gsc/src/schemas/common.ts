@@ -44,7 +44,7 @@ function isRealDate(value: string): boolean {
   return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
 }
 
-export const dateSchema = z
+const dateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, {
     message: "Dates must use the YYYY-MM-DD format.",

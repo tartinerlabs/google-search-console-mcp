@@ -1,12 +1,12 @@
 import { ConfigurationError, GoogleApiError } from "../utils/errors.ts";
 
-export type Strategy = "mobile" | "desktop";
+type Strategy = "mobile" | "desktop";
 export type Category =
   | "performance"
   | "accessibility"
   | "best-practices"
   | "seo";
-export type FormFactor = "PHONE" | "DESKTOP" | "TABLET";
+type FormFactor = "PHONE" | "DESKTOP" | "TABLET";
 
 export interface RunPagespeedParams {
   url: string;
@@ -15,13 +15,13 @@ export interface RunPagespeedParams {
 }
 
 /** One field-data metric from PageSpeed Insights' `loadingExperience`. */
-export interface LoadingExperienceMetric {
+interface LoadingExperienceMetric {
   percentile?: number;
   category?: string;
   distributions?: { min?: number; max?: number; proportion?: number }[];
 }
 
-export interface LoadingExperience {
+interface LoadingExperience {
   id?: string;
   metrics?: Record<string, LoadingExperienceMetric>;
   overall_category?: string;

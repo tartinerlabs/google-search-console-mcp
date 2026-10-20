@@ -9,7 +9,7 @@ import { registerSitemapsTool } from "./tools/sitemaps.ts";
 import { registerSitesTool } from "./tools/sites.ts";
 
 const SERVER_NAME = "google-search-console";
-export const SERVER_VERSION = "0.1.0";
+const SERVER_VERSION = "0.1.0";
 
 /** Server factory for the HTTP handler. */
 export function createServer(getClient: GscClientProvider): McpServer {

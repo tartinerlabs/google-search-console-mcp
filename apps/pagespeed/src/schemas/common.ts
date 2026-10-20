@@ -18,7 +18,7 @@ export const httpUrlSchema = z
     message: "Must be an absolute http:// or https:// URL.",
   });
 
-export const originSchema = z
+const originSchema = z
   .string()
   .trim()
   .refine(
