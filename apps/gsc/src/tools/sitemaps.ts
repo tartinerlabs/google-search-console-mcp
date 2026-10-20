@@ -1,7 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod";
 import type { GscClientProvider } from "../google/client.ts";
-import { siteUrlSchema } from "../schemas/common.ts";
+import {
+  httpUrlSchema,
+  isUrlInProperty,
+  siteUrlSchema,
+} from "../schemas/common.ts";
 import { toToolError } from "../utils/errors.ts";
 
 export function registerSitemapsTool(
@@ -50,6 +54,56 @@ export function registerSitemapsTool(
         };
       } catch (error) {
         return toToolError("list_sitemaps", error);
+      }
+    },
+  );
+}
+
+export function registerSubmitSitemapTool(
+  server: McpServer,
+  getClient: GscClientProvider,
+): void {
+  server.registerTool(
+    "submit_sitemap",
+    {
+      title: "Submit a sitemap",
+      description:
+        "Submit (or resubmit) a sitemap for a Search Console property so Google fetches it. The sitemap URL must belong to the property.",
+      inputSchema: z
+        .object({
+          siteUrl: siteUrlSchema,
+          sitemapUrl: httpUrlSchema.describe(
+            "Absolute URL of the sitemap, e.g. https://www.example.com/sitemap.xml",
+          ),
+        })
+        .refine(
+          ({ siteUrl, sitemapUrl }) => isUrlInProperty(sitemapUrl, siteUrl),
+          {
+            message: "sitemapUrl must be under the property given in siteUrl.",
+            path: ["sitemapUrl"],
+          },
+        ),
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    async ({ siteUrl, sitemapUrl }) => {
+      try {
+        await (await getClient()).submitSitemap(siteUrl, sitemapUrl);
+        const result = {
+          siteUrl,
+          sitemapUrl,
+          submitted: true,
+          note: "Google fetches the sitemap asynchronously; check list_sitemaps later for its status.",
+        };
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (error) {
+        return toToolError("submit_sitemap", error);
       }
     },
   );

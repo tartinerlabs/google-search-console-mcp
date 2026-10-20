@@ -30,6 +30,16 @@ describe("MCP server", () => {
     for (const tool of tools) expect(tool.annotations.readOnlyHint).toBe(true);
   });
 
+  it("should add submit_sitemap, not read-only, only when writes are allowed", async () => {
+    const { rpc } = createTestClient(undefined, { allowWrite: true });
+    const message = await rpc("tools/list");
+    const tools: { name: string; annotations: { readOnlyHint: boolean } }[] =
+      message.result.tools;
+    expect(tools).toHaveLength(8);
+    const submit = tools.find((tool) => tool.name === "submit_sitemap");
+    expect(submit?.annotations.readOnlyHint).toBe(false);
+  });
+
   it("should answer ping", async () => {
     const { callTool } = createTestClient();
     expect(await callTool("ping")).toEqual({
