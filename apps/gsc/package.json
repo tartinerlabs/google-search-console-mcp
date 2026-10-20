@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "vercel-build": "turbo run build --filter=@tartinerlabs/google-search-console-mcp^... && pnpm db:migrate",
+    "vercel-build": "turbo run build && pnpm db:migrate",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
