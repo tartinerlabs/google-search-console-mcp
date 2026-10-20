@@ -19,6 +19,7 @@
     "@modelcontextprotocol/server": "catalog:",
     "@neon/config": "catalog:",
     "@repo/core": "workspace:*",
+    "@vercel/functions": "catalog:",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
