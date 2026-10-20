@@ -1,6 +1,6 @@
 {
   "name": "@tartinerlabs/google-search-console-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Unofficial Model Context Protocol server for Google Search Console, with Sign in with Google (OAuth 2.1 via Better Auth) on Vercel.",
   "license": "MIT",
   "type": "module",
@@ -41,6 +41,7 @@
     "@biomejs/biome": "2.5.15",
     "@semantic-release/changelog": "7.0.0",
     "@semantic-release/git": "11.0.1",
+    "@semantic-release/npm": "13.2.0",
     "@types/node": "26.6.5",
     "@types/pg": "8.23.1",
     "@vercel/config": "0.12.0",
@@ -71,6 +72,12 @@
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
       "@semantic-release/changelog",
+      [
+        "@semantic-release/npm",
+        {
+          "npmPublish": false
+        }
+      ],
       "@semantic-release/git",
       "@semantic-release/github"
     ]
