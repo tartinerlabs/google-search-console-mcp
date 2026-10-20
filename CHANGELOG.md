@@ -1,3 +1,15 @@
+# [0.5.0](https://github.com/tartinerlabs/mcp/compare/v0.4.1...v0.5.0) (2026-10-20)
+
+
+### Bug Fixes
+
+* reject legacy clients, fix CrUX ratings ([9f56062](https://github.com/tartinerlabs/mcp/commit/9f56062a3050c5170e24b29663e37c3b77a3f640))
+
+
+### Features
+
+* add optional sitemap write scope and CIMD host allow-list ([2ad5acb](https://github.com/tartinerlabs/mcp/commit/2ad5acbe32e0df65766330a84af8ba5df9385ed4))
+
 ## [0.4.1](https://github.com/tartinerlabs/mcp/compare/v0.4.0...v0.4.1) (2026-10-20)
 
 
