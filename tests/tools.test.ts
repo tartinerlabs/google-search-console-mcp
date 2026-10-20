@@ -228,6 +228,149 @@ describe("search_analytics date presets", () => {
   });
 });
 
+describe("compare_periods", () => {
+  type Body = { startDate: string; dimensions?: string[] };
+  const row = (key: string, clicks: number, impressions = clicks * 10) => ({
+    keys: [key],
+    clicks,
+    impressions,
+    ctr: clicks / impressions,
+    position: 5.04,
+  });
+
+  /** Current period starts 2026-02-01; anything earlier is the previous period. */
+  const querySearchAnalytics = vi.fn(async (_siteUrl: string, body: Body) => {
+    const current = body.startDate >= "2026-02-01";
+    if (!body.dimensions) {
+      return { rows: [current ? row("", 130, 1300) : row("", 100, 1000)] };
+    }
+    return {
+      rows: current
+        ? [row("shoes", 80), row("boots", 10), row("sandals", 40)]
+        : [row("shoes", 50), row("boots", 30), row("slippers", 20)],
+    };
+  });
+
+  it("should compare against the previous period of equal length", async () => {
+    querySearchAnalytics.mockClear();
+    const { callTool } = createTestClient(mockClient({ querySearchAnalytics }));
+    const result = await callTool("compare_periods", {
+      siteUrl: "sc-domain:example.com",
+      startDate: "2026-02-01",
+      endDate: "2026-02-28",
+      filters: [{ dimension: "country", expression: "GBR" }],
+    });
+    const body = JSON.parse(result.text);
+
+    expect(result.isError).toBe(false);
+    expect(body.previousPeriod).toEqual({
+      startDate: "2026-01-04",
+      endDate: "2026-01-31",
+    });
+    expect(querySearchAnalytics).toHaveBeenCalledWith(
+      "sc-domain:example.com",
+      expect.objectContaining({
+        startDate: "2026-01-04",
+        dimensions: ["query"],
+        rowLimit: 25000,
+        dimensionFilterGroups: [
+          {
+            groupType: "and",
+            filters: [
+              { dimension: "country", operator: "equals", expression: "GBR" },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(body.totals.change).toMatchObject({ clicks: 30, impressions: 300 });
+    expect(body.gainers).toEqual([
+      expect.objectContaining({
+        query: "shoes",
+        change: expect.objectContaining({ clicks: 30 }),
+      }),
+    ]);
+    expect(body.losers).toEqual([
+      expect.objectContaining({
+        query: "boots",
+        change: expect.objectContaining({ clicks: -20 }),
+      }),
+    ]);
+    expect(body.new.map((r: { query: string }) => r.query)).toEqual([
+      "sandals",
+    ]);
+    expect(body.lost.map((r: { query: string }) => r.query)).toEqual([
+      "slippers",
+    ]);
+    expect(body.gainers[0].current.position).toBe(5);
+  });
+
+  it("should compare the same dates a year earlier", async () => {
+    const { callTool } = createTestClient(mockClient({ querySearchAnalytics }));
+    const result = await callTool("compare_periods", {
+      siteUrl: "https://example.com/",
+      startDate: "2026-02-01",
+      endDate: "2026-02-28",
+      comparison: "previousYear",
+      dimension: "page",
+    });
+    const body = JSON.parse(result.text);
+    expect(body.previousPeriod).toEqual({
+      startDate: "2025-02-01",
+      endDate: "2025-02-28",
+    });
+    expect(body.gainers[0].page).toBe("shoes");
+  });
+
+  it("should warn when the previous period is beyond data retention", async () => {
+    vi.useFakeTimers({
+      now: new Date("2026-10-20T12:00:00Z"),
+      toFake: ["Date"],
+    });
+    try {
+      const { callTool } = createTestClient(
+        mockClient({ querySearchAnalytics: async () => ({}) }),
+      );
+      const body = JSON.parse(
+        (
+          await callTool("compare_periods", {
+            siteUrl: "https://example.com/",
+            startDate: "2025-10-01",
+            endDate: "2026-09-30",
+            comparison: "previousYear",
+          })
+        ).text,
+      );
+      expect(body.note).toContain("16 months");
+      expect(body.totals.current.clicks).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("should flag lists truncated by the row limit", async () => {
+    const rows = Array.from({ length: 25000 }, (_, i) => row(`q${i}`, 1));
+    const { callTool } = createTestClient(
+      mockClient({
+        querySearchAnalytics: async (_siteUrl, body) =>
+          body.dimensions ? { rows } : {},
+      }),
+    );
+    const body = JSON.parse(
+      (
+        await callTool("compare_periods", {
+          siteUrl: "https://example.com/",
+          startDate: "2026-02-01",
+          endDate: "2026-02-28",
+          limit: 5,
+        })
+      ).text,
+    );
+    expect(body.truncated).toContain("25,000-row limit");
+    expect(body.gainers).toEqual([]);
+  });
+});
+
 describe("inspect_url", () => {
   it("should return the inspection result", async () => {
     const inspectUrl = vi.fn(async () => ({

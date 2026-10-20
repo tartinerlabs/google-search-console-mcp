@@ -13,6 +13,7 @@ The server runs as a stateless Streamable HTTP endpoint on Vercel. MCP clients c
 | `ping` | Checks that the server is running. |
 | `list_sites` | Lists the properties the signed-in account can access, with its permission level. |
 | `search_analytics` | Clicks, impressions, CTR and average position for a date range, optionally grouped by dimensions and filtered. |
+| `compare_periods` | Compares a period with the previous period or the same dates a year earlier, by query, page, country, device or search appearance: total changes, biggest click gainers and losers, and new or lost rows. |
 | `inspect_url` | URL Inspection result for a page: index verdict, coverage, crawl, canonical, robots.txt, AMP, mobile usability and rich results. |
 | `list_sitemaps` | Sitemaps submitted for a property, with dates, error/warning counts and submitted URL counts. |
 
@@ -34,6 +35,17 @@ Values follow the [Search Analytics API reference](https://developers.google.com
 | `dataState` | `final` (default), `all`, `hourly_all` (use with the `hour` dimension) |
 | `rowLimit` | 1–25,000 (default 1,000) |
 | `startRow` | 0 or more, for paging |
+
+### `compare_periods` parameters
+
+| Parameter | Values |
+| --- | --- |
+| `siteUrl`, `dateRange` or `startDate` + `endDate`, `type`, `filters` | As for `search_analytics`; the dates set the current period and the filters apply to both periods |
+| `comparison` | `previousPeriod` (default, the same number of days just before) or `previousYear` (the same dates 12 months earlier) |
+| `dimension` | `query` (default), `page`, `country`, `device` or `searchAppearance` |
+| `limit` | Rows per list (`gainers`, `losers`, `new`, `lost`), 1–100 (default 25) |
+
+Totals come from separate ungrouped queries, so they include anonymised queries that grouped rows leave out. Each period fetches at most 25,000 grouped rows; the response says when a list was truncated.
 
 ## How it works
 

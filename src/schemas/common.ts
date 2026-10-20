@@ -126,3 +126,40 @@ export const startAfterEndError = {
   message: "startDate must be on or before endDate.",
   path: ["startDate"],
 };
+
+// Values below follow https://developers.google.com/webmaster-tools/v1/searchanalytics/query
+const FILTER_DIMENSIONS = [
+  "country",
+  "device",
+  "page",
+  "query",
+  "searchAppearance",
+] as const;
+const OPERATORS = [
+  "equals",
+  "notEquals",
+  "contains",
+  "notContains",
+  "includingRegex",
+  "excludingRegex",
+] as const;
+export const SEARCH_TYPES = [
+  "web",
+  "image",
+  "video",
+  "news",
+  "discover",
+  "googleNews",
+] as const;
+
+export const filterSchema = z.object({
+  dimension: z.enum(FILTER_DIMENSIONS),
+  operator: z.enum(OPERATORS).default("equals"),
+  expression: z
+    .string()
+    .min(1)
+    .max(4096)
+    .describe(
+      "Value to match. country: ISO 3166-1 alpha-3 code (e.g. GBR); device: DESKTOP, MOBILE or TABLET; regex operators use RE2 syntax.",
+    ),
+});

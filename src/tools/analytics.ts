@@ -6,9 +6,11 @@ import type {
 } from "../google/client.ts";
 import {
   dateRangeFields,
+  filterSchema,
   hasOneDateRange,
   isStartOnOrBeforeEnd,
   oneDateRangeError,
+  SEARCH_TYPES,
   siteUrlSchema,
   startAfterEndError,
 } from "../schemas/common.ts";
@@ -25,29 +27,6 @@ const DIMENSIONS = [
   "device",
   "searchAppearance",
 ] as const;
-const FILTER_DIMENSIONS = [
-  "country",
-  "device",
-  "page",
-  "query",
-  "searchAppearance",
-] as const;
-const OPERATORS = [
-  "equals",
-  "notEquals",
-  "contains",
-  "notContains",
-  "includingRegex",
-  "excludingRegex",
-] as const;
-const SEARCH_TYPES = [
-  "web",
-  "image",
-  "video",
-  "news",
-  "discover",
-  "googleNews",
-] as const;
 const AGGREGATION_TYPES = [
   "auto",
   "byPage",
@@ -55,18 +34,6 @@ const AGGREGATION_TYPES = [
   "byNewsShowcasePanel",
 ] as const;
 const DATA_STATES = ["final", "all", "hourly_all"] as const;
-
-const filterSchema = z.object({
-  dimension: z.enum(FILTER_DIMENSIONS),
-  operator: z.enum(OPERATORS).default("equals"),
-  expression: z
-    .string()
-    .min(1)
-    .max(4096)
-    .describe(
-      "Value to match. country: ISO 3166-1 alpha-3 code (e.g. GBR); device: DESKTOP, MOBILE or TABLET; regex operators use RE2 syntax.",
-    ),
-});
 
 const searchAnalyticsInput = z
   .object({
