@@ -6,6 +6,7 @@ import { isAPIError } from "better-auth/api";
 import { OAuth2Client } from "google-auth-library";
 import { auth, SCOPES } from "../lib/auth.ts";
 import { CredentialsError } from "../utils/errors.ts";
+import { logger } from "../utils/logger.ts";
 
 type SearchAnalyticsRequest =
   searchconsole_v1.Schema$SearchAnalyticsQueryRequest;
@@ -79,8 +80,14 @@ export async function getUserGscClient(userId: string): Promise<GscClient> {
     }));
   } catch (error) {
     if (isAPIError(error)) {
+      // The same error class covers a revoked token, a missing account and an
+      // undecryptable token, so record which one it was.
+      logger.warn(
+        { statusCode: error.statusCode, code: error.body?.code },
+        "Google access token unavailable",
+      );
       throw new CredentialsError(
-        "Google refused to renew access: it has expired or been revoked. " +
+        "Google access could not be renewed: the sign-in may have expired or been revoked. " +
           "Refresh tokens for OAuth apps in 'Testing' publishing status expire after 7 days.",
       );
     }
