@@ -15,18 +15,6 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push"
   },
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "12.14.0",
-      "onFail": "download"
-    },
-    "runtime": {
-      "name": "node",
-      "version": "26.8.2",
-      "onFail": "download"
-    }
-  },
   "dependencies": {
     "@modelcontextprotocol/server": "2.3.1",
     "@neon/config": "1.9.1",

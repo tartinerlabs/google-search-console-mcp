@@ -239,9 +239,6 @@ importers:
       drizzle-kit:
         specifier: 1.0.0-rc.4
         version: 1.0.0-rc.4
-      node:
-        specifier: runtime:26.8.2
-        version: runtime:26.8.2
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -294,9 +291,6 @@ importers:
       drizzle-kit:
         specifier: 1.0.0-rc.4
         version: 1.0.0-rc.4
-      node:
-        specifier: runtime:26.8.2
-        version: runtime:26.8.2
       typescript:
         specifier: 7.0.2
         version: 7.0.2
