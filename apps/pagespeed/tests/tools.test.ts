@@ -154,6 +154,25 @@ describe("pagespeed_analyze", () => {
       text: expect.stringContaining("[unexpected]"),
     });
   });
+
+  it("should report a Lighthouse runtime error instead of empty scores", async () => {
+    const runPagespeed = vi.fn().mockResolvedValue({
+      lighthouseResult: {
+        ...lighthouseResult,
+        runtimeError: {
+          code: "FAILED_DOCUMENT_REQUEST",
+          message: "Lighthouse was unable to reliably load the page.",
+        },
+      },
+    });
+    const { callTool } = createTestClient(mockClient({ runPagespeed }));
+    const result = await callTool("pagespeed_analyze", {
+      url: "https://example.com/",
+    });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("[unexpected]");
+    expect(result.text).toContain("FAILED_DOCUMENT_REQUEST");
+  });
 });
 
 describe("crux_query", () => {
@@ -213,6 +232,40 @@ describe("crux_query", () => {
         poor: 0.15,
       },
     });
+  });
+
+  it("should rate a p75 on a threshold in the better band", async () => {
+    const { metrics } = record.record;
+    const onThresholds: CruxRecordResponse = {
+      record: {
+        ...record.record,
+        metrics: {
+          largest_contentful_paint: {
+            ...metrics.largest_contentful_paint,
+            percentiles: { p75: 2500 },
+          },
+          interaction_to_next_paint: {
+            ...metrics.interaction_to_next_paint,
+            percentiles: { p75: 500 },
+          },
+          cumulative_layout_shift: {
+            ...metrics.cumulative_layout_shift,
+            percentiles: { p75: "0.10" },
+          },
+        },
+      },
+    };
+    const queryRecord = vi.fn().mockResolvedValue(onThresholds);
+    const { callTool } = createTestClient(mockClient({ queryRecord }));
+    const result = await callTool("crux_query", {
+      url: "https://example.com/page",
+    });
+    const body = JSON.parse(result.text);
+    expect(body.metrics.largest_contentful_paint.rating).toBe("good");
+    expect(body.metrics.interaction_to_next_paint.rating).toBe(
+      "needs_improvement",
+    );
+    expect(body.metrics.cumulative_layout_shift.rating).toBe("good");
   });
 
   it("should explain a 404 as missing field data", async () => {

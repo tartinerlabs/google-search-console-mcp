@@ -50,13 +50,14 @@ export function toNumber(value: number | string | null | undefined) {
 
 /**
  * The three-bin CrUX histogram uses the Core Web Vitals thresholds as bin
- * edges, so the p75 is rated by which bin it falls into.
+ * edges. A p75 equal to a threshold gets the better rating: "good" is
+ * ≤ 2500 ms LCP, and "poor" starts above 4000 ms.
  */
 function rate(p75: number | null, edges: (number | null)[]) {
   if (p75 === null || edges.length < 2) return undefined;
   const [good, poor] = edges;
-  if (good !== null && good !== undefined && p75 < good) return "good";
-  if (poor !== null && poor !== undefined && p75 < poor)
+  if (good !== null && good !== undefined && p75 <= good) return "good";
+  if (poor !== null && poor !== undefined && p75 <= poor)
     return "needs_improvement";
   return "poor";
 }

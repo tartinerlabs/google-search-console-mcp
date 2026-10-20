@@ -140,7 +140,8 @@ export function classifyError(error: unknown): ClassifiedError {
         ...base,
         kind: "quota",
         message:
-          "Google API quota or rate limit exceeded (the Chrome UX Report allows 150 queries per minute per project). Wait a minute and retry.",
+          "Google API quota or rate limit exceeded. The Chrome UX Report allows 150 queries per minute per Google Cloud project; " +
+          "PageSpeed Insights has its own per-project quota. Wait a minute and retry.",
       };
     }
     if (reasons.some((r) => KEY_REASONS.has(r))) {
@@ -170,7 +171,8 @@ export function classifyError(error: unknown): ClassifiedError {
         ...base,
         kind: "not_found",
         message:
-          "The Chrome UX Report has no field data for this URL or origin: it does not get enough Chrome traffic. " +
+          "The Chrome UX Report has no field data for this URL or origin: it is not publicly reachable as given " +
+          "(check the protocol and subdomain) or does not get enough Chrome traffic. " +
           "Try the origin instead of a single URL, or omit formFactor.",
       };
     }

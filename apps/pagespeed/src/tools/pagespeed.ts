@@ -160,6 +160,12 @@ export function registerPagespeedTool(
             "PageSpeed Insights returned no Lighthouse result for this URL. Retry later.",
           );
         }
+        const { runtimeError } = response.lighthouseResult;
+        if (runtimeError) {
+          throw new UnexpectedResponseError(
+            `Lighthouse could not analyse this URL (${runtimeError.code}): ${runtimeError.message}`,
+          );
+        }
         const result = {
           strategy,
           ...summariseLighthouse(

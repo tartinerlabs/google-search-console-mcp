@@ -51,6 +51,8 @@ export interface LighthouseResult {
   finalDisplayedUrl?: string;
   fetchTime?: string;
   runWarnings?: string[];
+  /** Set when Lighthouse could not analyse the page; the result should be discarded. */
+  runtimeError?: { code: string; message: string };
   categories: Partial<Record<Category, LighthouseCategory>>;
   audits: Record<string, LighthouseAudit>;
 }
