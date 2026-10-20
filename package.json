@@ -4,16 +4,17 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "test": "pnpm -r test",
-    "check": "pnpm lint && pnpm -r check"
+    "test": "turbo run test",
+    "check": "pnpm lint && turbo run typecheck test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
-    "semantic-release": "25.0.9"
+    "semantic-release": "25.0.9",
+    "turbo": "2.11.9"
   },
   "devEngines": {
     "packageManager": {

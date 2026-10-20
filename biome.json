@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!apps/*/drizzle", "!apps/gsc/src/db/schema/auth.ts"]
+    "includes": ["**"]
   },
   "formatter": {
     "enabled": true,
