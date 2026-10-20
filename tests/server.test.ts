@@ -13,13 +13,14 @@ describe("MCP server", () => {
     expect(message.result.capabilities.tools).toBeDefined();
   });
 
-  it("should register exactly the six read-only tools", async () => {
+  it("should register exactly the seven read-only tools", async () => {
     const { rpc } = createTestClient();
     const message = await rpc("tools/list");
     const tools: { name: string; annotations: { readOnlyHint: boolean } }[] =
       message.result.tools;
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       "compare_periods",
+      "find_opportunities",
       "inspect_url",
       "list_sitemaps",
       "list_sites",
@@ -158,6 +159,24 @@ describe("input validation", () => {
     expect(result.isError).toBe(true);
     expect(result.text).toContain(expected);
   });
+
+  it.each([
+    [
+      "minPosition above maxPosition",
+      { ...valid, minPosition: 21, maxPosition: 20 },
+      "minPosition must be",
+    ],
+    ["a country dimension", { ...valid, dimension: "country" }, "dimension"],
+    ["zero minImpressions", { ...valid, minImpressions: 0 }, "minImpressions"],
+  ])(
+    "should reject %s for find_opportunities",
+    async (_label, args, expected) => {
+      const { callTool } = createTestClient();
+      const result = await callTool("find_opportunities", args);
+      expect(result.isError).toBe(true);
+      expect(result.text).toContain(expected);
+    },
+  );
 
   it("should reject an inspection URL outside the property for inspect_url", async () => {
     const { callTool } = createTestClient();

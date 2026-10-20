@@ -14,6 +14,7 @@ The server runs as a stateless Streamable HTTP endpoint on Vercel. MCP clients c
 | `list_sites` | Lists the properties the signed-in account can access, with its permission level. |
 | `search_analytics` | Clicks, impressions, CTR and average position for a date range, optionally grouped by dimensions and filtered. |
 | `compare_periods` | Compares a period with the previous period or the same dates a year earlier, by query, page, country, device or search appearance: total changes, biggest click gainers and losers, and new or lost rows. |
+| `find_opportunities` | Queries or pages with the most upside, measured against the property's own CTR-by-position curve: striking-distance rows (positions 4–20 by default) ranked by extra clicks at a top-3 position, and first-page rows whose CTR is below the curve, ranked by missed clicks. |
 | `inspect_url` | URL Inspection result for a page: index verdict, coverage, crawl, canonical, robots.txt, AMP, mobile usability and rich results. |
 | `list_sitemaps` | Sitemaps submitted for a property, with dates, error/warning counts and submitted URL counts. |
 
@@ -46,6 +47,18 @@ Values follow the [Search Analytics API reference](https://developers.google.com
 | `limit` | Rows per list (`gainers`, `losers`, `new`, `lost`), 1–100 (default 25) |
 
 Totals come from separate ungrouped queries, so they include anonymised queries that grouped rows leave out. Each period fetches at most 25,000 grouped rows; the response says when a list was truncated.
+
+### `find_opportunities` parameters
+
+| Parameter | Values |
+| --- | --- |
+| `siteUrl`, `dateRange` or `startDate` + `endDate`, `type`, `filters` | As for `search_analytics` |
+| `dimension` | `query` (default) or `page` |
+| `minPosition`, `maxPosition` | Striking-distance window, default 4–20 |
+| `minImpressions` | Ignore rows with fewer impressions, default 50 |
+| `limit` | Rows per list, 1–100 (default 25) |
+
+The expected CTR at each rounded position is the impression-weighted CTR of all the property's rows at that position in the same period, so it reflects the niche and SERP features such as AI Overviews rather than a generic industry curve. The response includes this `ctrCurve` and the combined `top3Ctr` used for striking-distance potential.
 
 ## How it works
 

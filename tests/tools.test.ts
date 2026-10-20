@@ -371,6 +371,131 @@ describe("compare_periods", () => {
   });
 });
 
+describe("find_opportunities", () => {
+  const row = (
+    key: string,
+    position: number,
+    clicks: number,
+    impressions: number,
+  ) => ({
+    keys: [key],
+    position,
+    clicks,
+    impressions,
+    ctr: clicks / impressions,
+  });
+  const rows = [
+    row("a", 1.2, 300, 1000),
+    row("b", 2.8, 100, 1000),
+    row("c", 3.1, 20, 1000),
+    row("d", 7.6, 10, 2000),
+    row("e", 15, 0, 500),
+    row("f", 30, 0, 5000),
+    row("g", 9, 0, 10),
+  ];
+
+  it("should rank striking-distance rows and CTR gaps against the site's own curve", async () => {
+    const querySearchAnalytics = vi.fn(async () => ({ rows }));
+    const { callTool } = createTestClient(mockClient({ querySearchAnalytics }));
+    const result = await callTool("find_opportunities", {
+      siteUrl: "sc-domain:example.com",
+      startDate: "2026-01-01",
+      endDate: "2026-01-28",
+    });
+    const body = JSON.parse(result.text);
+
+    expect(querySearchAnalytics).toHaveBeenCalledWith("sc-domain:example.com", {
+      startDate: "2026-01-01",
+      endDate: "2026-01-28",
+      dimensions: ["query"],
+      type: undefined,
+      rowLimit: 25000,
+      dimensionFilterGroups: undefined,
+    });
+    expect(body.top3Ctr).toBe(0.14);
+    expect(
+      body.ctrCurve.map((point: { position: number }) => point.position),
+    ).toEqual([1, 3, 8, 9, 15]);
+    expect(body.ctrCurve[1]).toEqual({
+      position: 3,
+      ctr: 0.06,
+      impressions: 2000,
+    });
+    expect(body.strikingDistance).toEqual([
+      {
+        query: "d",
+        clicks: 10,
+        impressions: 2000,
+        ctr: 0.005,
+        position: 7.6,
+        potentialExtraClicks: 270,
+      },
+      {
+        query: "e",
+        clicks: 0,
+        impressions: 500,
+        ctr: 0,
+        position: 15,
+        potentialExtraClicks: 70,
+      },
+    ]);
+    expect(body.ctrGaps).toEqual([
+      {
+        query: "c",
+        clicks: 20,
+        impressions: 1000,
+        ctr: 0.02,
+        position: 3.1,
+        expectedCtr: 0.06,
+        missedClicks: 40,
+      },
+    ]);
+  });
+
+  it("should honour the position window and limit", async () => {
+    const { callTool } = createTestClient(
+      mockClient({ querySearchAnalytics: async () => ({ rows }) }),
+    );
+    const body = JSON.parse(
+      (
+        await callTool("find_opportunities", {
+          siteUrl: "https://example.com/",
+          startDate: "2026-01-01",
+          endDate: "2026-01-28",
+          dimension: "page",
+          minPosition: 10,
+          maxPosition: 40,
+          limit: 1,
+        })
+      ).text,
+    );
+    expect(body.strikingDistance).toEqual([
+      expect.objectContaining({ page: "f", potentialExtraClicks: 700 }),
+    ]);
+  });
+
+  it("should explain an empty result", async () => {
+    const { callTool } = createTestClient(
+      mockClient({ querySearchAnalytics: async () => ({}) }),
+    );
+    const body = JSON.parse(
+      (
+        await callTool("find_opportunities", {
+          siteUrl: "https://example.com/",
+          startDate: "2026-01-01",
+          endDate: "2026-01-28",
+        })
+      ).text,
+    );
+    expect(body).toMatchObject({
+      strikingDistance: [],
+      ctrGaps: [],
+      top3Ctr: null,
+    });
+    expect(body.note).toContain("No data matched");
+  });
+});
+
 describe("inspect_url", () => {
   it("should return the inspection result", async () => {
     const inspectUrl = vi.fn(async () => ({
