@@ -15,8 +15,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@semantic-release/changelog": "7.0.0",
+    "@semantic-release/exec": "7.1.0",
     "@semantic-release/git": "11.0.1",
-    "@semantic-release/npm": "13.2.0",
     "semantic-release": "25.0.9",
     "turbo": "2.11.9"
   },
@@ -31,23 +31,5 @@
       "version": "26.8.2",
       "onFail": "download"
     }
-  },
-  "release": {
-    "branches": [
-      "main"
-    ],
-    "plugins": [
-      "@semantic-release/commit-analyzer",
-      "@semantic-release/release-notes-generator",
-      "@semantic-release/changelog",
-      [
-        "@semantic-release/npm",
-        {
-          "npmPublish": false
-        }
-      ],
-      "@semantic-release/git",
-      "@semantic-release/github"
-    ]
   }
 }
