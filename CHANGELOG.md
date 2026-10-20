@@ -1,3 +1,10 @@
+# [0.6.0](https://github.com/tartinerlabs/mcp/compare/v0.5.0...v0.6.0) (2026-10-20)
+
+
+### Features
+
+* restyle OAuth pages ([c6980af](https://github.com/tartinerlabs/mcp/commit/c6980af0f7060c23632ca6f5772685438d1c27ba))
+
 # [0.5.0](https://github.com/tartinerlabs/mcp/compare/v0.4.1...v0.5.0) (2026-10-20)
 
 
