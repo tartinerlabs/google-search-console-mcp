@@ -3,6 +3,17 @@
   "ui": "tui",
   "tasks": {
     "build": {
+      "env": [
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "MCP_ALLOWED_HOSTS",
+        "MCP_ALLOWED_ORIGINS",
+        "LOG_LEVEL"
+      ],
       "outputs": ["dist/**"]
     },
     "typecheck": {},
