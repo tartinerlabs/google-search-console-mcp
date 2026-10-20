@@ -5,6 +5,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "dev": "portless",
+    "dev:app": "vercel dev --listen $PORT",
     "build": "tsc -p tsconfig.build.json",
     "vercel-build": "pnpm db:migrate",
     "typecheck": "tsc --noEmit",
@@ -14,6 +16,10 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push"
+  },
+  "portless": {
+    "name": "gsc.mcp",
+    "script": "dev:app"
   },
   "dependencies": {
     "@better-auth/cimd": "1.7.10",
