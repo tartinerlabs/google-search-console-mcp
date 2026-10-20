@@ -54,6 +54,9 @@ export function createAuth({ db, schema, scopes }: AuthOptions) {
       },
     },
     account: { encryptOAuthTokens: true },
+    // A refreshed session cookie on /oauth2/authorize looks like a fresh
+    // sign-in to the OAuth provider, which then skips `selectAccount` below.
+    session: { disableSessionRefresh: true },
     advanced: { database: { generateId: "uuid" } },
     plugins: [
       jwt(),
