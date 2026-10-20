@@ -13,7 +13,12 @@
     [
       "@semantic-release/git",
       {
-        "assets": ["CHANGELOG.md", "package.json", "apps/*/package.json"]
+        "assets": [
+          "CHANGELOG.md",
+          "package.json",
+          "apps/*/package.json",
+          "packages/*/package.json"
+        ]
       }
     ],
     "@semantic-release/github"

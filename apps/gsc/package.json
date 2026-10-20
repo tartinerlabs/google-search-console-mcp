@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "vercel-build": "pnpm db:migrate",
+    "vercel-build": "turbo run build && pnpm db:migrate",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -16,22 +16,18 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "@better-auth/cimd": "1.7.10",
     "@better-auth/core": "1.7.10",
-    "@better-auth/drizzle-adapter": "1.7.10",
-    "@better-auth/mcp": "1.7.10",
-    "@better-auth/oauth-provider": "1.7.10",
     "@googleapis/searchconsole": "11.0.1",
     "@modelcontextprotocol/server": "2.3.1",
     "@neon/config": "1.9.1",
     "@neon/env": "1.6.2",
+    "@repo/core": "workspace:*",
     "better-auth": "1.7.10",
     "better-call": "1.4.2",
     "drizzle-orm": "1.0.0-rc.4",
     "google-auth-library": "11.3.0",
     "hono": "4.13.13",
     "pg": "8.23.1",
-    "pino": "10.4.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
