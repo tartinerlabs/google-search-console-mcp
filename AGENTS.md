@@ -4,15 +4,15 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Commands
 
-pnpm only (`pnpm-lock.yaml`, pnpm 12 and Node declared in `devEngines`).
+pnpm only (`pnpm-lock.yaml`, pnpm 12 and Node declared in `devEngines`). pnpm workspace with Turborepo (`turbo.json`): the Google Search Console server lives in `apps/gsc`, and Biome and semantic-release run from the root. Each app's `biome.json` and `turbo.json` extend the root ones (`"extends": "//"` / `["//"]`); declare an app's env vars in its own `turbo.json` (Turborepo runs in strict env mode). Paths and app commands below are relative to `apps/gsc` unless noted.
 
 ```sh
-pnpm check                          # typecheck + biome lint + vitest — what CI runs, plus `pnpm build`
-pnpm test                           # vitest run
+pnpm check                          # root: biome lint + turbo typecheck/test — what CI runs, plus `pnpm build`
+pnpm test                           # root: turbo run test
+pnpm format                         # root: biome format --write
+pnpm build                          # root: turbo run build → apps/*/dist/
 pnpm vitest run tests/tools.test.ts # single file
 pnpm vitest run -t "search_analytics"  # single describe/test by name
-pnpm format                         # biome format --write
-pnpm build                          # tsc -p tsconfig.build.json → dist/
 pnpm db:push                        # sync schema to the Neon development branch
 pnpm db:migrate                     # apply committed migrations (also runs as `vercel-build`)
 ```
