@@ -17,8 +17,24 @@
       "cache": false,
       "persistent": true
     },
+    "auth:generate": {
+      "cache": false,
+      "passThroughEnv": ["BETTER_AUTH_URL", "DATABASE_URL"]
+    },
     "db:generate": {
-      "cache": false
+      "cache": false,
+      "persistent": true,
+      "interactive": true
+    },
+    "db:migrate": {
+      "cache": false,
+      "passThroughEnv": ["DATABASE_URL_UNPOOLED"]
+    },
+    "db:push": {
+      "cache": false,
+      "persistent": true,
+      "interactive": true,
+      "passThroughEnv": ["DATABASE_URL_UNPOOLED"]
     }
   }
 }
