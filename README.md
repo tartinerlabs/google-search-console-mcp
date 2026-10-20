@@ -13,6 +13,8 @@ The server runs as a stateless Streamable HTTP endpoint on Vercel. MCP clients c
 | `ping` | Checks that the server is running. |
 | `list_sites` | Lists the properties the signed-in account can access, with its permission level. |
 | `search_analytics` | Clicks, impressions, CTR and average position for a date range, optionally grouped by dimensions and filtered. |
+| `compare_periods` | Compares a period with the previous period or the same dates a year earlier, by query, page, country, device or search appearance: total changes, biggest click gainers and losers, and new or lost rows. |
+| `find_opportunities` | Queries or pages with the most upside, measured against the property's own CTR-by-position curve: striking-distance rows (positions 4–20 by default) ranked by extra clicks at a top-3 position, and first-page rows whose CTR is below the curve, ranked by missed clicks. |
 | `inspect_url` | URL Inspection result for a page: index verdict, coverage, crawl, canonical, robots.txt, AMP, mobile usability and rich results. |
 | `list_sitemaps` | Sitemaps submitted for a property, with dates, error/warning counts and submitted URL counts. |
 
@@ -25,7 +27,8 @@ Values follow the [Search Analytics API reference](https://developers.google.com
 | Parameter | Values |
 | --- | --- |
 | `siteUrl` | Property exactly as returned by `list_sites`: `https://www.example.com/` (trailing slash) or `sc-domain:example.com` |
-| `startDate`, `endDate` | `YYYY-MM-DD`, Pacific Time, inclusive, `startDate` ≤ `endDate` |
+| `dateRange` | `last7Days`, `last28Days`, `last3Months`, `last6Months`, `last12Months`, `last16Months`. Ends on the latest day with final data (one extra small query finds it), like the Search Console UI. Use instead of `startDate`/`endDate`; the response echoes the resolved dates. |
+| `startDate`, `endDate` | `YYYY-MM-DD`, Pacific Time, inclusive, `startDate` ≤ `endDate`. Use both, instead of `dateRange`. |
 | `dimensions` | Any of `date`, `hour`, `query`, `page`, `country`, `device`, `searchAppearance` (each at most once) |
 | `type` | `web` (default), `image`, `video`, `news`, `discover`, `googleNews` |
 | `filters` | `{ dimension, operator, expression }` where `dimension` is `country`, `device`, `page`, `query` or `searchAppearance` and `operator` is `equals` (default), `notEquals`, `contains`, `notContains`, `includingRegex` or `excludingRegex` (RE2). All filters must match. |
@@ -33,6 +36,29 @@ Values follow the [Search Analytics API reference](https://developers.google.com
 | `dataState` | `final` (default), `all`, `hourly_all` (use with the `hour` dimension) |
 | `rowLimit` | 1–25,000 (default 1,000) |
 | `startRow` | 0 or more, for paging |
+
+### `compare_periods` parameters
+
+| Parameter | Values |
+| --- | --- |
+| `siteUrl`, `dateRange` or `startDate` + `endDate`, `type`, `filters` | As for `search_analytics`; the dates set the current period and the filters apply to both periods |
+| `comparison` | `previousPeriod` (default, the same number of days just before) or `previousYear` (the same dates 12 months earlier) |
+| `dimension` | `query` (default), `page`, `country`, `device` or `searchAppearance` |
+| `limit` | Rows per list (`gainers`, `losers`, `new`, `lost`), 1–100 (default 25) |
+
+Totals come from separate ungrouped queries, so they include anonymised queries that grouped rows leave out. Each period fetches at most 25,000 grouped rows; the response says when a list was truncated.
+
+### `find_opportunities` parameters
+
+| Parameter | Values |
+| --- | --- |
+| `siteUrl`, `dateRange` or `startDate` + `endDate`, `type`, `filters` | As for `search_analytics` |
+| `dimension` | `query` (default) or `page` |
+| `minPosition`, `maxPosition` | Striking-distance window, default 4–20 |
+| `minImpressions` | Ignore rows with fewer impressions, default 50 |
+| `limit` | Rows per list, 1–100 (default 25) |
+
+The expected CTR at each rounded position is the impression-weighted CTR of all the property's rows at that position in the same period, so it reflects the niche and SERP features such as AI Overviews rather than a generic industry curve. The response includes this `ctrCurve` and the combined `top3Ctr` used for striking-distance potential.
 
 ## How it works
 

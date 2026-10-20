@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createTestClient, googleError, mockClient } from "./helpers.ts";
 
 describe("list_sites", () => {
@@ -136,6 +136,363 @@ describe("search_analytics", () => {
     expect(JSON.parse(result.text).metadata).toEqual({
       firstIncompleteDate: "2026-01-02",
     });
+  });
+});
+
+describe("search_analytics date presets", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("should end a preset on the latest day with final data", async () => {
+    vi.useFakeTimers({
+      now: new Date("2026-10-20T12:00:00Z"),
+      toFake: ["Date"],
+    });
+    const querySearchAnalytics = vi.fn(
+      async (_siteUrl: string, body: object) =>
+        "rowLimit" in body
+          ? { rows: [] }
+          : {
+              rows: [
+                { keys: ["2026-10-16"], clicks: 1 },
+                { keys: ["2026-10-17"], clicks: 1 },
+              ],
+            },
+    );
+    const { callTool } = createTestClient(mockClient({ querySearchAnalytics }));
+    const result = await callTool("search_analytics", {
+      siteUrl: "sc-domain:example.com",
+      dateRange: "last28Days",
+      type: "discover",
+      rowLimit: 10,
+    });
+
+    expect(querySearchAnalytics).toHaveBeenNthCalledWith(
+      1,
+      "sc-domain:example.com",
+      {
+        startDate: "2026-10-10",
+        endDate: "2026-10-20",
+        dimensions: ["date"],
+        type: "discover",
+      },
+    );
+    expect(querySearchAnalytics).toHaveBeenLastCalledWith(
+      "sc-domain:example.com",
+      expect.objectContaining({
+        startDate: "2026-09-20",
+        endDate: "2026-10-17",
+      }),
+    );
+    expect(JSON.parse(result.text)).toMatchObject({
+      dateRange: "last28Days",
+      startDate: "2026-09-20",
+      endDate: "2026-10-17",
+    });
+  });
+
+  it("should resolve month presets by calendar month", async () => {
+    const querySearchAnalytics = vi.fn(
+      async (_siteUrl: string, body: object) =>
+        "rowLimit" in body
+          ? { rows: [] }
+          : { rows: [{ keys: ["2026-05-31"] }] },
+    );
+    const { callTool } = createTestClient(mockClient({ querySearchAnalytics }));
+    const result = await callTool("search_analytics", {
+      siteUrl: "https://example.com/",
+      dateRange: "last3Months",
+      rowLimit: 10,
+    });
+    expect(JSON.parse(result.text)).toMatchObject({
+      startDate: "2026-03-01",
+      endDate: "2026-05-31",
+    });
+  });
+
+  it("should fall back to three days ago when recent days have no data", async () => {
+    vi.useFakeTimers({
+      now: new Date("2026-10-20T12:00:00Z"),
+      toFake: ["Date"],
+    });
+    const { callTool } = createTestClient(
+      mockClient({ querySearchAnalytics: async () => ({}) }),
+    );
+    const result = await callTool("search_analytics", {
+      siteUrl: "https://example.com/",
+      dateRange: "last7Days",
+    });
+    expect(JSON.parse(result.text)).toMatchObject({
+      startDate: "2026-10-11",
+      endDate: "2026-10-17",
+    });
+  });
+});
+
+describe("compare_periods", () => {
+  type Body = { startDate: string; dimensions?: string[] };
+  const row = (key: string, clicks: number, impressions = clicks * 10) => ({
+    keys: [key],
+    clicks,
+    impressions,
+    ctr: clicks / impressions,
+    position: 5.04,
+  });
+
+  /** Current period starts 2026-02-01; anything earlier is the previous period. */
+  const querySearchAnalytics = vi.fn(async (_siteUrl: string, body: Body) => {
+    const current = body.startDate >= "2026-02-01";
+    if (!body.dimensions) {
+      return { rows: [current ? row("", 130, 1300) : row("", 100, 1000)] };
+    }
+    return {
+      rows: current
+        ? [row("shoes", 80), row("boots", 10), row("sandals", 40)]
+        : [row("shoes", 50), row("boots", 30), row("slippers", 20)],
+    };
+  });
+
+  it("should compare against the previous period of equal length", async () => {
+    querySearchAnalytics.mockClear();
+    const { callTool } = createTestClient(mockClient({ querySearchAnalytics }));
+    const result = await callTool("compare_periods", {
+      siteUrl: "sc-domain:example.com",
+      startDate: "2026-02-01",
+      endDate: "2026-02-28",
+      filters: [{ dimension: "country", expression: "GBR" }],
+    });
+    const body = JSON.parse(result.text);
+
+    expect(result.isError).toBe(false);
+    expect(body.previousPeriod).toEqual({
+      startDate: "2026-01-04",
+      endDate: "2026-01-31",
+    });
+    expect(querySearchAnalytics).toHaveBeenCalledWith(
+      "sc-domain:example.com",
+      expect.objectContaining({
+        startDate: "2026-01-04",
+        dimensions: ["query"],
+        rowLimit: 25000,
+        dimensionFilterGroups: [
+          {
+            groupType: "and",
+            filters: [
+              { dimension: "country", operator: "equals", expression: "GBR" },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(body.totals.change).toMatchObject({ clicks: 30, impressions: 300 });
+    expect(body.gainers).toEqual([
+      expect.objectContaining({
+        query: "shoes",
+        change: expect.objectContaining({ clicks: 30 }),
+      }),
+    ]);
+    expect(body.losers).toEqual([
+      expect.objectContaining({
+        query: "boots",
+        change: expect.objectContaining({ clicks: -20 }),
+      }),
+    ]);
+    expect(body.new.map((r: { query: string }) => r.query)).toEqual([
+      "sandals",
+    ]);
+    expect(body.lost.map((r: { query: string }) => r.query)).toEqual([
+      "slippers",
+    ]);
+    expect(body.gainers[0].current.position).toBe(5);
+  });
+
+  it("should compare the same dates a year earlier", async () => {
+    const { callTool } = createTestClient(mockClient({ querySearchAnalytics }));
+    const result = await callTool("compare_periods", {
+      siteUrl: "https://example.com/",
+      startDate: "2026-02-01",
+      endDate: "2026-02-28",
+      comparison: "previousYear",
+      dimension: "page",
+    });
+    const body = JSON.parse(result.text);
+    expect(body.previousPeriod).toEqual({
+      startDate: "2025-02-01",
+      endDate: "2025-02-28",
+    });
+    expect(body.gainers[0].page).toBe("shoes");
+  });
+
+  it("should warn when the previous period is beyond data retention", async () => {
+    vi.useFakeTimers({
+      now: new Date("2026-10-20T12:00:00Z"),
+      toFake: ["Date"],
+    });
+    try {
+      const { callTool } = createTestClient(
+        mockClient({ querySearchAnalytics: async () => ({}) }),
+      );
+      const body = JSON.parse(
+        (
+          await callTool("compare_periods", {
+            siteUrl: "https://example.com/",
+            startDate: "2025-10-01",
+            endDate: "2026-09-30",
+            comparison: "previousYear",
+          })
+        ).text,
+      );
+      expect(body.note).toContain("16 months");
+      expect(body.totals.current.clicks).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("should flag lists truncated by the row limit", async () => {
+    const rows = Array.from({ length: 25000 }, (_, i) => row(`q${i}`, 1));
+    const { callTool } = createTestClient(
+      mockClient({
+        querySearchAnalytics: async (_siteUrl, body) =>
+          body.dimensions ? { rows } : {},
+      }),
+    );
+    const body = JSON.parse(
+      (
+        await callTool("compare_periods", {
+          siteUrl: "https://example.com/",
+          startDate: "2026-02-01",
+          endDate: "2026-02-28",
+          limit: 5,
+        })
+      ).text,
+    );
+    expect(body.truncated).toContain("25,000-row limit");
+    expect(body.gainers).toEqual([]);
+  });
+});
+
+describe("find_opportunities", () => {
+  const row = (
+    key: string,
+    position: number,
+    clicks: number,
+    impressions: number,
+  ) => ({
+    keys: [key],
+    position,
+    clicks,
+    impressions,
+    ctr: clicks / impressions,
+  });
+  const rows = [
+    row("a", 1.2, 300, 1000),
+    row("b", 2.8, 100, 1000),
+    row("c", 3.1, 20, 1000),
+    row("d", 7.6, 10, 2000),
+    row("e", 15, 0, 500),
+    row("f", 30, 0, 5000),
+    row("g", 9, 0, 10),
+  ];
+
+  it("should rank striking-distance rows and CTR gaps against the site's own curve", async () => {
+    const querySearchAnalytics = vi.fn(async () => ({ rows }));
+    const { callTool } = createTestClient(mockClient({ querySearchAnalytics }));
+    const result = await callTool("find_opportunities", {
+      siteUrl: "sc-domain:example.com",
+      startDate: "2026-01-01",
+      endDate: "2026-01-28",
+    });
+    const body = JSON.parse(result.text);
+
+    expect(querySearchAnalytics).toHaveBeenCalledWith("sc-domain:example.com", {
+      startDate: "2026-01-01",
+      endDate: "2026-01-28",
+      dimensions: ["query"],
+      type: undefined,
+      rowLimit: 25000,
+      dimensionFilterGroups: undefined,
+    });
+    expect(body.top3Ctr).toBe(0.14);
+    expect(
+      body.ctrCurve.map((point: { position: number }) => point.position),
+    ).toEqual([1, 3, 8, 9, 15]);
+    expect(body.ctrCurve[1]).toEqual({
+      position: 3,
+      ctr: 0.06,
+      impressions: 2000,
+    });
+    expect(body.strikingDistance).toEqual([
+      {
+        query: "d",
+        clicks: 10,
+        impressions: 2000,
+        ctr: 0.005,
+        position: 7.6,
+        potentialExtraClicks: 270,
+      },
+      {
+        query: "e",
+        clicks: 0,
+        impressions: 500,
+        ctr: 0,
+        position: 15,
+        potentialExtraClicks: 70,
+      },
+    ]);
+    expect(body.ctrGaps).toEqual([
+      {
+        query: "c",
+        clicks: 20,
+        impressions: 1000,
+        ctr: 0.02,
+        position: 3.1,
+        expectedCtr: 0.06,
+        missedClicks: 40,
+      },
+    ]);
+  });
+
+  it("should honour the position window and limit", async () => {
+    const { callTool } = createTestClient(
+      mockClient({ querySearchAnalytics: async () => ({ rows }) }),
+    );
+    const body = JSON.parse(
+      (
+        await callTool("find_opportunities", {
+          siteUrl: "https://example.com/",
+          startDate: "2026-01-01",
+          endDate: "2026-01-28",
+          dimension: "page",
+          minPosition: 10,
+          maxPosition: 40,
+          limit: 1,
+        })
+      ).text,
+    );
+    expect(body.strikingDistance).toEqual([
+      expect.objectContaining({ page: "f", potentialExtraClicks: 700 }),
+    ]);
+  });
+
+  it("should explain an empty result", async () => {
+    const { callTool } = createTestClient(
+      mockClient({ querySearchAnalytics: async () => ({}) }),
+    );
+    const body = JSON.parse(
+      (
+        await callTool("find_opportunities", {
+          siteUrl: "https://example.com/",
+          startDate: "2026-01-01",
+          endDate: "2026-01-28",
+        })
+      ).text,
+    );
+    expect(body).toMatchObject({
+      strikingDistance: [],
+      ctrGaps: [],
+      top3Ctr: null,
+    });
+    expect(body.note).toContain("No data matched");
   });
 });
 

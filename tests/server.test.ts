@@ -13,12 +13,14 @@ describe("MCP server", () => {
     expect(message.result.capabilities.tools).toBeDefined();
   });
 
-  it("should register exactly the five read-only tools", async () => {
+  it("should register exactly the seven read-only tools", async () => {
     const { rpc } = createTestClient();
     const message = await rpc("tools/list");
     const tools: { name: string; annotations: { readOnlyHint: boolean } }[] =
       message.result.tools;
     expect(tools.map((tool) => tool.name).sort()).toEqual([
+      "compare_periods",
+      "find_opportunities",
       "inspect_url",
       "list_sitemaps",
       "list_sites",
@@ -81,6 +83,21 @@ describe("input validation", () => {
       "on or before endDate",
     ],
     [
+      "a dateRange together with explicit dates",
+      { ...valid, dateRange: "last28Days" },
+      "either dateRange or both",
+    ],
+    [
+      "a startDate without an endDate",
+      { siteUrl: valid.siteUrl, startDate: valid.startDate },
+      "either dateRange or both",
+    ],
+    [
+      "an unknown dateRange preset",
+      { siteUrl: valid.siteUrl, dateRange: "lastWeek" },
+      "dateRange",
+    ],
+    [
       "an unknown dimension",
       { ...valid, dimensions: ["keyword"] },
       "dimensions",
@@ -118,6 +135,44 @@ describe("input validation", () => {
     async (_label, args, expected) => {
       const { callTool } = createTestClient();
       const result = await callTool("search_analytics", args);
+      expect(result.isError).toBe(true);
+      expect(result.text).toContain(expected);
+    },
+  );
+
+  it.each([
+    [
+      "an unknown comparison",
+      { ...valid, comparison: "lastWeek" },
+      "comparison",
+    ],
+    ["a date dimension", { ...valid, dimension: "date" }, "dimension"],
+    ["a limit above 100", { ...valid, limit: 101 }, "limit"],
+    [
+      "a dateRange together with explicit dates",
+      { ...valid, dateRange: "last7Days" },
+      "either dateRange or both",
+    ],
+  ])("should reject %s for compare_periods", async (_label, args, expected) => {
+    const { callTool } = createTestClient();
+    const result = await callTool("compare_periods", args);
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain(expected);
+  });
+
+  it.each([
+    [
+      "minPosition above maxPosition",
+      { ...valid, minPosition: 21, maxPosition: 20 },
+      "minPosition must be",
+    ],
+    ["a country dimension", { ...valid, dimension: "country" }, "dimension"],
+    ["zero minImpressions", { ...valid, minImpressions: 0 }, "minImpressions"],
+  ])(
+    "should reject %s for find_opportunities",
+    async (_label, args, expected) => {
+      const { callTool } = createTestClient();
+      const result = await callTool("find_opportunities", args);
       expect(result.isError).toBe(true);
       expect(result.text).toContain(expected);
     },

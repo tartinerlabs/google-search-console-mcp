@@ -2,7 +2,9 @@ import { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod";
 import type { GscClientProvider } from "./google/client.ts";
 import { registerAnalyticsTool } from "./tools/analytics.ts";
+import { registerComparePeriodsTool } from "./tools/compare-periods.ts";
 import { registerInspectionTool } from "./tools/inspection.ts";
+import { registerOpportunitiesTool } from "./tools/opportunities.ts";
 import { registerSitemapsTool } from "./tools/sitemaps.ts";
 import { registerSitesTool } from "./tools/sites.ts";
 
@@ -35,6 +37,8 @@ export function createServer(getClient: GscClientProvider): McpServer {
 
   registerSitesTool(server, getClient);
   registerAnalyticsTool(server, getClient);
+  registerComparePeriodsTool(server, getClient);
+  registerOpportunitiesTool(server, getClient);
   registerInspectionTool(server, getClient);
   registerSitemapsTool(server, getClient);
 
