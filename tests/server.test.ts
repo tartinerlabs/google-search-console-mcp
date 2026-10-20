@@ -81,6 +81,21 @@ describe("input validation", () => {
       "on or before endDate",
     ],
     [
+      "a dateRange together with explicit dates",
+      { ...valid, dateRange: "last28Days" },
+      "either dateRange or both",
+    ],
+    [
+      "a startDate without an endDate",
+      { siteUrl: valid.siteUrl, startDate: valid.startDate },
+      "either dateRange or both",
+    ],
+    [
+      "an unknown dateRange preset",
+      { siteUrl: valid.siteUrl, dateRange: "lastWeek" },
+      "dateRange",
+    ],
+    [
       "an unknown dimension",
       { ...valid, dimensions: ["keyword"] },
       "dimensions",

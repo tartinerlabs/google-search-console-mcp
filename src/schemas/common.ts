@@ -65,3 +65,64 @@ export function isUrlInProperty(
   }
   return inspectionUrl.startsWith(siteUrl);
 }
+
+export const DATE_RANGE_PRESETS = [
+  "last7Days",
+  "last28Days",
+  "last3Months",
+  "last6Months",
+  "last12Months",
+  "last16Months",
+] as const;
+
+export type DateRangePreset = (typeof DATE_RANGE_PRESETS)[number];
+
+/** Either a preset or an explicit `startDate`/`endDate` pair; combine with the refinements below. */
+export const dateRangeFields = {
+  startDate: dateSchema
+    .optional()
+    .describe(
+      "Start date (inclusive), YYYY-MM-DD, Pacific Time. Use with endDate instead of dateRange.",
+    ),
+  endDate: dateSchema
+    .optional()
+    .describe(
+      "End date (inclusive), YYYY-MM-DD, Pacific Time. Use with startDate instead of dateRange.",
+    ),
+  dateRange: z
+    .enum(DATE_RANGE_PRESETS)
+    .optional()
+    .describe(
+      "Preset ending on the latest day with final data, like the Search Console UI. Use instead of startDate/endDate.",
+    ),
+};
+
+export interface DateRangeInput {
+  startDate?: string;
+  endDate?: string;
+  dateRange?: DateRangePreset;
+}
+
+export function hasOneDateRange(input: DateRangeInput): boolean {
+  return input.dateRange
+    ? input.startDate === undefined && input.endDate === undefined
+    : input.startDate !== undefined && input.endDate !== undefined;
+}
+
+export const oneDateRangeError = {
+  message: "Give either dateRange or both startDate and endDate.",
+  path: ["dateRange"],
+};
+
+export function isStartOnOrBeforeEnd(input: DateRangeInput): boolean {
+  return (
+    input.startDate === undefined ||
+    input.endDate === undefined ||
+    input.startDate <= input.endDate
+  );
+}
+
+export const startAfterEndError = {
+  message: "startDate must be on or before endDate.",
+  path: ["startDate"],
+};

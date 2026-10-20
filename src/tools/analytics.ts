@@ -4,7 +4,15 @@ import type {
   GscClientProvider,
   SearchAnalyticsResponse,
 } from "../google/client.ts";
-import { dateSchema, siteUrlSchema } from "../schemas/common.ts";
+import {
+  dateRangeFields,
+  hasOneDateRange,
+  isStartOnOrBeforeEnd,
+  oneDateRangeError,
+  siteUrlSchema,
+  startAfterEndError,
+} from "../schemas/common.ts";
+import { type DateRange, resolveDateRange } from "../utils/date-range.ts";
 import { toToolError } from "../utils/errors.ts";
 
 // Values below follow https://developers.google.com/webmaster-tools/v1/searchanalytics/query
@@ -63,12 +71,7 @@ const filterSchema = z.object({
 const searchAnalyticsInput = z
   .object({
     siteUrl: siteUrlSchema,
-    startDate: dateSchema.describe(
-      "Start date (inclusive), YYYY-MM-DD, Pacific Time.",
-    ),
-    endDate: dateSchema.describe(
-      "End date (inclusive), YYYY-MM-DD, Pacific Time.",
-    ),
+    ...dateRangeFields,
     dimensions: z
       .array(z.enum(DIMENSIONS))
       .refine((dims) => new Set(dims).size === dims.length, {
@@ -110,10 +113,8 @@ const searchAnalyticsInput = z
       .optional()
       .describe("Zero-based row offset for paging."),
   })
-  .refine((input) => input.startDate <= input.endDate, {
-    message: "startDate must be on or before endDate.",
-    path: ["startDate"],
-  })
+  .refine(hasOneDateRange, oneDateRangeError)
+  .refine(isStartOnOrBeforeEnd, startAfterEndError)
   .refine(
     (input) =>
       input.aggregationType !== "byProperty" ||
@@ -133,6 +134,7 @@ type SearchAnalyticsInput = z.infer<typeof searchAnalyticsInput>;
 /** Turn the API's positional `keys` into named dimension values. */
 function transformSearchAnalytics(
   input: SearchAnalyticsInput,
+  range: DateRange,
   response: SearchAnalyticsResponse,
 ) {
   const dimensions = input.dimensions ?? [];
@@ -150,8 +152,9 @@ function transformSearchAnalytics(
   });
   return {
     siteUrl: input.siteUrl,
-    startDate: input.startDate,
-    endDate: input.endDate,
+    ...(input.dateRange && { dateRange: input.dateRange }),
+    startDate: range.startDate,
+    endDate: range.endDate,
     dimensions,
     responseAggregationType: response.responseAggregationType ?? null,
     ...(response.metadata && { metadata: response.metadata }),
@@ -172,7 +175,8 @@ export function registerAnalyticsTool(
     {
       title: "Query Search Analytics",
       description:
-        "Query Google Search performance (clicks, impressions, CTR, average position) for a property over a date range, " +
+        "Query Google Search performance (clicks, impressions, CTR, average position) for a property over a date range " +
+        "(a dateRange preset, or explicit startDate/endDate), " +
         "optionally grouped by dimensions and filtered. Rows are sorted by clicks (or by date when grouped by date). " +
         "Use startRow to page through more than rowLimit rows.",
       inputSchema: searchAnalyticsInput,
@@ -184,23 +188,26 @@ export function registerAnalyticsTool(
     },
     async (input) => {
       try {
-        const response = await (await getClient()).querySearchAnalytics(
+        const client = await getClient();
+        const range = await resolveDateRange(
+          client,
           input.siteUrl,
-          {
-            startDate: input.startDate,
-            endDate: input.endDate,
-            dimensions: input.dimensions,
-            type: input.type,
-            aggregationType: input.aggregationType,
-            dataState: input.dataState,
-            rowLimit: input.rowLimit,
-            startRow: input.startRow,
-            dimensionFilterGroups: input.filters?.length
-              ? [{ groupType: "and", filters: input.filters }]
-              : undefined,
-          },
+          input,
+          input.type,
         );
-        const result = transformSearchAnalytics(input, response);
+        const response = await client.querySearchAnalytics(input.siteUrl, {
+          ...range,
+          dimensions: input.dimensions,
+          type: input.type,
+          aggregationType: input.aggregationType,
+          dataState: input.dataState,
+          rowLimit: input.rowLimit,
+          startRow: input.startRow,
+          dimensionFilterGroups: input.filters?.length
+            ? [{ groupType: "and", filters: input.filters }]
+            : undefined,
+        });
+        const result = transformSearchAnalytics(input, range, response);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };

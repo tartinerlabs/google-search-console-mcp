@@ -25,7 +25,8 @@ Values follow the [Search Analytics API reference](https://developers.google.com
 | Parameter | Values |
 | --- | --- |
 | `siteUrl` | Property exactly as returned by `list_sites`: `https://www.example.com/` (trailing slash) or `sc-domain:example.com` |
-| `startDate`, `endDate` | `YYYY-MM-DD`, Pacific Time, inclusive, `startDate` ≤ `endDate` |
+| `dateRange` | `last7Days`, `last28Days`, `last3Months`, `last6Months`, `last12Months`, `last16Months`. Ends on the latest day with final data (one extra small query finds it), like the Search Console UI. Use instead of `startDate`/`endDate`; the response echoes the resolved dates. |
+| `startDate`, `endDate` | `YYYY-MM-DD`, Pacific Time, inclusive, `startDate` ≤ `endDate`. Use both, instead of `dateRange`. |
 | `dimensions` | Any of `date`, `hour`, `query`, `page`, `country`, `device`, `searchAppearance` (each at most once) |
 | `type` | `web` (default), `image`, `video`, `news`, `discover`, `googleNews` |
 | `filters` | `{ dimension, operator, expression }` where `dimension` is `country`, `device`, `page`, `query` or `searchAppearance` and `operator` is `equals` (default), `notEquals`, `contains`, `notContains`, `includingRegex` or `excludingRegex` (RE2). All filters must match. |

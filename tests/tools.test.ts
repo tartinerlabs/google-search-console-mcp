@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createTestClient, googleError, mockClient } from "./helpers.ts";
 
 describe("list_sites", () => {
@@ -135,6 +135,95 @@ describe("search_analytics", () => {
     });
     expect(JSON.parse(result.text).metadata).toEqual({
       firstIncompleteDate: "2026-01-02",
+    });
+  });
+});
+
+describe("search_analytics date presets", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("should end a preset on the latest day with final data", async () => {
+    vi.useFakeTimers({
+      now: new Date("2026-10-20T12:00:00Z"),
+      toFake: ["Date"],
+    });
+    const querySearchAnalytics = vi.fn(
+      async (_siteUrl: string, body: object) =>
+        "rowLimit" in body
+          ? { rows: [] }
+          : {
+              rows: [
+                { keys: ["2026-10-16"], clicks: 1 },
+                { keys: ["2026-10-17"], clicks: 1 },
+              ],
+            },
+    );
+    const { callTool } = createTestClient(mockClient({ querySearchAnalytics }));
+    const result = await callTool("search_analytics", {
+      siteUrl: "sc-domain:example.com",
+      dateRange: "last28Days",
+      type: "discover",
+      rowLimit: 10,
+    });
+
+    expect(querySearchAnalytics).toHaveBeenNthCalledWith(
+      1,
+      "sc-domain:example.com",
+      {
+        startDate: "2026-10-10",
+        endDate: "2026-10-20",
+        dimensions: ["date"],
+        type: "discover",
+      },
+    );
+    expect(querySearchAnalytics).toHaveBeenLastCalledWith(
+      "sc-domain:example.com",
+      expect.objectContaining({
+        startDate: "2026-09-20",
+        endDate: "2026-10-17",
+      }),
+    );
+    expect(JSON.parse(result.text)).toMatchObject({
+      dateRange: "last28Days",
+      startDate: "2026-09-20",
+      endDate: "2026-10-17",
+    });
+  });
+
+  it("should resolve month presets by calendar month", async () => {
+    const querySearchAnalytics = vi.fn(
+      async (_siteUrl: string, body: object) =>
+        "rowLimit" in body
+          ? { rows: [] }
+          : { rows: [{ keys: ["2026-05-31"] }] },
+    );
+    const { callTool } = createTestClient(mockClient({ querySearchAnalytics }));
+    const result = await callTool("search_analytics", {
+      siteUrl: "https://example.com/",
+      dateRange: "last3Months",
+      rowLimit: 10,
+    });
+    expect(JSON.parse(result.text)).toMatchObject({
+      startDate: "2026-03-01",
+      endDate: "2026-05-31",
+    });
+  });
+
+  it("should fall back to three days ago when recent days have no data", async () => {
+    vi.useFakeTimers({
+      now: new Date("2026-10-20T12:00:00Z"),
+      toFake: ["Date"],
+    });
+    const { callTool } = createTestClient(
+      mockClient({ querySearchAnalytics: async () => ({}) }),
+    );
+    const result = await callTool("search_analytics", {
+      siteUrl: "https://example.com/",
+      dateRange: "last7Days",
+    });
+    expect(JSON.parse(result.text)).toMatchObject({
+      startDate: "2026-10-11",
+      endDate: "2026-10-17",
     });
   });
 });
