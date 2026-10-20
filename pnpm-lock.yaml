@@ -205,7 +205,7 @@ importers:
       '@neon/env':
         specifier: 1.6.2
         version: 1.6.2
-      '@tartinerlabs/mcp-core':
+      '@repo/core':
         specifier: workspace:*
         version: link:../../packages/core
       better-auth:

@@ -1,4 +1,4 @@
-import { createPages } from "@tartinerlabs/mcp-core/pages";
+import { createPages } from "@repo/core/pages";
 import { auth } from "./lib/auth.ts";
 import { logger } from "./utils/logger.ts";
 

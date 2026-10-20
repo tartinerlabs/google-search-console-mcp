@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "vercel-build": "pnpm db:migrate",
+    "vercel-build": "pnpm --filter @repo/core build && pnpm db:migrate",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -21,7 +21,7 @@
     "@modelcontextprotocol/server": "2.3.1",
     "@neon/config": "1.9.1",
     "@neon/env": "1.6.2",
-    "@tartinerlabs/mcp-core": "workspace:*",
+    "@repo/core": "workspace:*",
     "better-auth": "1.7.10",
     "better-call": "1.4.2",
     "drizzle-orm": "1.0.0-rc.4",

@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Commands
 
-pnpm only (`pnpm-lock.yaml`, pnpm 12 and Node declared in `devEngines`). pnpm workspace with Turborepo (`turbo.json`): the Google Search Console server lives in `apps/gsc`, provider-neutral auth/HTTP code shared by apps lives in `packages/core` (`@tartinerlabs/mcp-core`, exported as `.ts` source with no build step), and Biome and semantic-release run from the root. Each app's `biome.json` and `turbo.json` extend the root ones (`"extends": "//"` / `["//"]`); declare an app's env vars in its own `turbo.json` (Turborepo runs in strict env mode). Paths and app commands below are relative to `apps/gsc` unless noted.
+pnpm only (`pnpm-lock.yaml`, pnpm 12 and Node declared in `devEngines`). pnpm workspace with Turborepo (`turbo.json`): the Google Search Console server lives in `apps/gsc`, provider-neutral auth/HTTP code shared by apps lives in `packages/core` (`@repo/core`, exported as `.ts` source with no build step), and Biome and semantic-release run from the root. Each app's `biome.json` and `turbo.json` extend the root ones (`"extends": "//"` / `["//"]`); declare an app's env vars in its own `turbo.json` (Turborepo runs in strict env mode). Paths and app commands below are relative to `apps/gsc` unless noted.
 
 ```sh
 pnpm check                          # root: biome lint + turbo typecheck/test — what CI runs, plus `pnpm build`

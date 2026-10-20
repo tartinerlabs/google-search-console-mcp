@@ -1,8 +1,8 @@
-import { createAuth } from "@tartinerlabs/mcp-core/auth";
+import { createAuth } from "@repo/core/auth";
 import { db } from "../db/index.ts";
 import * as schema from "../db/schema/auth.ts";
 
-export { resource } from "@tartinerlabs/mcp-core/auth";
+export { resource } from "@repo/core/auth";
 
 /** Google scope for read-only Search Console access. */
 export const SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"];

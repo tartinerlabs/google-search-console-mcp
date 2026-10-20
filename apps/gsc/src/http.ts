@@ -1,5 +1,5 @@
 import type { AuthInfo } from "@modelcontextprotocol/server";
-import { createMcpEndpoint } from "@tartinerlabs/mcp-core/http";
+import { createMcpEndpoint } from "@repo/core/http";
 import { getUserGscClient } from "./google/client.ts";
 import { auth } from "./lib/auth.ts";
 import { createServer } from "./server.ts";

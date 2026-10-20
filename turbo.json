@@ -3,6 +3,7 @@
   "ui": "tui",
   "tasks": {
     "build": {
+      "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
     "transit": {
@@ -12,7 +13,7 @@
       "dependsOn": ["transit"]
     },
     "test": {
-      "dependsOn": ["transit"]
+      "dependsOn": ["^build"]
     }
   }
 }

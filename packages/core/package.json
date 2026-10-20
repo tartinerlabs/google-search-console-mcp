@@ -1,16 +1,17 @@
 {
-  "name": "@tartinerlabs/mcp-core",
+  "name": "@repo/core",
   "version": "0.3.0",
   "private": true,
   "license": "MIT",
   "type": "module",
   "exports": {
-    "./auth": "./src/auth.ts",
-    "./http": "./src/http.ts",
-    "./logger": "./src/logger.ts",
-    "./pages": "./src/pages.ts"
+    "./*": {
+      "types": "./src/*.ts",
+      "default": "./dist/*.js"
+    }
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
