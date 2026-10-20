@@ -6,11 +6,8 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "transit": {
-      "dependsOn": ["^transit"]
-    },
     "typecheck": {
-      "dependsOn": ["transit"]
+      "dependsOn": ["^build"]
     },
     "test": {
       "dependsOn": ["^build"]
