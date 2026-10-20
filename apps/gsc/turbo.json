@@ -12,6 +12,8 @@
         "GOOGLE_CLIENT_SECRET",
         "MCP_ALLOWED_HOSTS",
         "MCP_ALLOWED_ORIGINS",
+        "CIMD_ALLOWED_HOSTS",
+        "GSC_ENABLE_WRITE",
         "LOG_LEVEL"
       ]
     }

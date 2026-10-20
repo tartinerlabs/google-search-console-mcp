@@ -5,14 +5,25 @@ import { registerAnalyticsTool } from "./tools/analytics.ts";
 import { registerComparePeriodsTool } from "./tools/compare-periods.ts";
 import { registerInspectionTool } from "./tools/inspection.ts";
 import { registerOpportunitiesTool } from "./tools/opportunities.ts";
-import { registerSitemapsTool } from "./tools/sitemaps.ts";
+import {
+  registerSitemapsTool,
+  registerSubmitSitemapTool,
+} from "./tools/sitemaps.ts";
 import { registerSitesTool } from "./tools/sites.ts";
 
 const SERVER_NAME = "google-search-console";
 const SERVER_VERSION = "0.1.0";
 
+export interface ServerOptions {
+  /** Register `submit_sitemap`, which needs the `webmasters` write scope. */
+  allowWrite?: boolean;
+}
+
 /** Server factory for the HTTP handler. */
-export function createServer(getClient: GscClientProvider): McpServer {
+export function createServer(
+  getClient: GscClientProvider,
+  { allowWrite = false }: ServerOptions = {},
+): McpServer {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });
 
   server.registerTool(
@@ -41,6 +52,7 @@ export function createServer(getClient: GscClientProvider): McpServer {
   registerOpportunitiesTool(server, getClient);
   registerInspectionTool(server, getClient);
   registerSitemapsTool(server, getClient);
+  if (allowWrite) registerSubmitSitemapTool(server, getClient);
 
   return server;
 }

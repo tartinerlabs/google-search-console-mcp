@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { CredentialsError } from "../src/utils/errors.ts";
 import { createTestClient, googleError, mockClient } from "./helpers.ts";
 
 describe("list_sites", () => {
@@ -579,6 +580,55 @@ describe("list_sitemaps", () => {
     );
     expect(body.sitemaps).toEqual([]);
     expect(body.note).toContain("No sitemaps");
+  });
+});
+
+describe("submit_sitemap", () => {
+  it("should submit a sitemap under the property", async () => {
+    const submitSitemap = vi.fn(async () => {});
+    const { callTool } = createTestClient(mockClient({ submitSitemap }), {
+      allowWrite: true,
+    });
+    const result = await callTool("submit_sitemap", {
+      siteUrl: "sc-domain:example.com",
+      sitemapUrl: "https://www.example.com/sitemap.xml",
+    });
+    expect(result.isError).toBe(false);
+    expect(JSON.parse(result.text).submitted).toBe(true);
+    expect(submitSitemap).toHaveBeenCalledWith(
+      "sc-domain:example.com",
+      "https://www.example.com/sitemap.xml",
+    );
+  });
+
+  it("should reject a sitemap outside the property", async () => {
+    const submitSitemap = vi.fn(async () => {});
+    const { callTool } = createTestClient(mockClient({ submitSitemap }), {
+      allowWrite: true,
+    });
+    const result = await callTool("submit_sitemap", {
+      siteUrl: "https://example.com/blog/",
+      sitemapUrl: "https://example.com/sitemap.xml",
+    });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("must be under the property");
+    expect(submitSitemap).not.toHaveBeenCalled();
+  });
+
+  it("should surface a missing write scope as an auth error", async () => {
+    const { callTool } = createTestClient(
+      mockClient({
+        submitSitemap: () =>
+          Promise.reject(new CredentialsError("needs write access")),
+      }),
+      { allowWrite: true },
+    );
+    const result = await callTool("submit_sitemap", {
+      siteUrl: "https://example.com/",
+      sitemapUrl: "https://example.com/sitemap.xml",
+    });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("[auth]");
   });
 });
 

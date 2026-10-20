@@ -1,7 +1,7 @@
 import type { AuthInfo } from "@modelcontextprotocol/server";
 import { createMcpEndpoint } from "@repo/core/http";
 import { getUserGscClient } from "./google/client.ts";
-import { auth } from "./lib/auth.ts";
+import { auth, WRITE_ENABLED } from "./lib/auth.ts";
 import { createServer } from "./server.ts";
 import { CredentialsError } from "./utils/errors.ts";
 import { logger } from "./utils/logger.ts";
@@ -20,5 +20,7 @@ export const handleMcp = createMcpEndpoint({
   auth,
   logger,
   createServer: (authInfo) =>
-    createServer(() => getUserGscClient(userIdOf(authInfo))),
+    createServer(() => getUserGscClient(userIdOf(authInfo)), {
+      allowWrite: WRITE_ENABLED,
+    }),
 });

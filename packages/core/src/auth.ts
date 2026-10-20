@@ -17,6 +17,21 @@ export interface AuthOptions {
 /** The MCP endpoint: the protected resource access tokens are bound to. */
 export const resource = new URL("/mcp", process.env.BETTER_AUTH_URL).href;
 
+/** Hostnames allowed to host client metadata documents; empty allows any. */
+const allowedMetadataHosts = (process.env.CIMD_ALLOWED_HOSTS ?? "")
+  .split(",")
+  .map((host) => host.trim().toLowerCase())
+  .filter(Boolean);
+
+/** Whether a CIMD `client_id` URL is on a host in `CIMD_ALLOWED_HOSTS`. */
+export function isMetadataDocumentUrlAllowed(
+  clientIdUrl: string,
+  allowedHosts = allowedMetadataHosts,
+): boolean {
+  if (allowedHosts.length === 0) return true;
+  return allowedHosts.includes(new URL(clientIdUrl).hostname.toLowerCase());
+}
+
 /**
  * Better Auth as the OAuth 2.1 authorisation server for MCP clients, with
  * Google as the only sign-in provider.
@@ -53,6 +68,8 @@ export function createAuth({ db, schema, scopes }: AuthOptions) {
       cimd({
         fetchClientMetadataResource,
         metadataProfile: "mcp-2026-07-28",
+        isMetadataDocumentUrlAllowed: (clientIdUrl) =>
+          isMetadataDocumentUrlAllowed(clientIdUrl),
       }),
     ],
   });

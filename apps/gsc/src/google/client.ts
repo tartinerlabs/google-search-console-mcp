@@ -4,7 +4,7 @@ import {
 } from "@googleapis/searchconsole";
 import { isAPIError } from "better-auth/api";
 import { OAuth2Client } from "google-auth-library";
-import { auth, SCOPES } from "../lib/auth.ts";
+import { auth, READ_SCOPE, WRITE_SCOPE } from "../lib/auth.ts";
 import { CredentialsError } from "../utils/errors.ts";
 import { logger } from "../utils/logger.ts";
 
@@ -26,6 +26,7 @@ export interface GscClient {
     body: SearchAnalyticsRequest,
   ): Promise<SearchAnalyticsResponse>;
   inspectUrl(body: InspectUrlRequest): Promise<InspectUrlResponse>;
+  submitSitemap(siteUrl: string, feedpath: string): Promise<void>;
 }
 
 /**
@@ -34,7 +35,7 @@ export interface GscClient {
  */
 export type GscClientProvider = () => GscClient | Promise<GscClient>;
 
-function createGscClient(auth: OAuth2Client): GscClient {
+function createGscClient(auth: OAuth2Client, granted: Set<string>): GscClient {
   const api = searchconsole({ version: "v1", auth });
   return {
     async listSites() {
@@ -51,6 +52,14 @@ function createGscClient(auth: OAuth2Client): GscClient {
       return (await api.urlInspection.index.inspect({ requestBody: body }))
         .data;
     },
+    async submitSitemap(siteUrl, feedpath) {
+      if (!granted.has(WRITE_SCOPE)) {
+        throw new CredentialsError(
+          "Submitting sitemaps needs write access to Search Console, which this sign-in did not grant. Reconnect to approve it.",
+        );
+      }
+      await api.sitemaps.submit({ siteUrl, feedpath });
+    },
   };
 }
 
@@ -66,7 +75,7 @@ export async function getUserGscClient(userId: string): Promise<GscClient> {
 
   // Google's granular consent lets the user untick the Search Console permission.
   const granted = new Set((account.scope ?? "").split(/[\s,]+/));
-  if (!SCOPES.every((scope) => granted.has(scope))) {
+  if (!granted.has(READ_SCOPE) && !granted.has(WRITE_SCOPE)) {
     throw new CredentialsError(
       "Google did not grant access to Search Console data (the permission was not ticked on Google's consent screen).",
     );
@@ -99,5 +108,5 @@ export async function getUserGscClient(userId: string): Promise<GscClient> {
 
   const client = new OAuth2Client();
   client.setCredentials({ access_token: accessToken });
-  return createGscClient(client);
+  return createGscClient(client, granted);
 }

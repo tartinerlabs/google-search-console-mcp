@@ -19,8 +19,9 @@ This repository is a pnpm workspace: the Search Console server lives in `apps/gs
 | `find_opportunities` | Queries or pages with the most upside, measured against the property's own CTR-by-position curve: striking-distance rows (positions 4–20 by default) ranked by extra clicks at a top-3 position, and first-page rows whose CTR is below the curve, ranked by missed clicks. |
 | `inspect_url` | URL Inspection result for a page: index verdict, coverage, crawl, canonical, robots.txt, AMP, mobile usability and rich results. |
 | `list_sitemaps` | Sitemaps submitted for a property, with dates, error/warning counts and submitted URL counts. |
+| `submit_sitemap` | Only when `GSC_ENABLE_WRITE=true`: submits or resubmits a sitemap URL under the property. |
 
-All tools are read-only and use the `https://www.googleapis.com/auth/webmasters.readonly` scope. Tool failures are returned as MCP tool results with `isError: true` and a category prefix: `[invalid_input]`, `[auth]`, `[permission]`, `[quota]`, `[not_found]`, `[unavailable]`, `[network]` or `[unexpected]`.
+By default all tools are read-only and use the `https://www.googleapis.com/auth/webmasters.readonly` scope. Setting `GSC_ENABLE_WRITE=true` requests `https://www.googleapis.com/auth/webmasters` instead and registers `submit_sitemap`; the read tools keep working for users who signed in before the change, and `submit_sitemap` asks them to reconnect. Tool failures are returned as MCP tool results with `isError: true` and a category prefix: `[invalid_input]`, `[auth]`, `[permission]`, `[quota]`, `[not_found]`, `[unavailable]`, `[network]` or `[unexpected]`.
 
 ### `search_analytics` parameters
 
@@ -102,7 +103,7 @@ pnpm install
 2. Enable the **Google Search Console API**: *APIs & Services → Library → Google Search Console API → Enable*.
 3. Configure the OAuth consent screen (*Google Auth Platform → Branding / Audience / Data Access*):
    - User type **External**.
-   - Under *Data Access*, add the scope `https://www.googleapis.com/auth/webmasters.readonly` (plus the default `openid`, `email` and `profile`).
+   - Under *Data Access*, add the scope `https://www.googleapis.com/auth/webmasters.readonly` (plus the default `openid`, `email` and `profile`), or `https://www.googleapis.com/auth/webmasters` if you set `GSC_ENABLE_WRITE=true`.
 4. Create the OAuth client: *Google Auth Platform → Clients → Create client*:
    - Application type: **Web application**.
    - Authorised redirect URI: `https://<your-domain>/api/auth/callback/google` (Better Auth's callback path for the Google provider).
@@ -147,6 +148,8 @@ Vercel runs the Hono app in `apps/gsc/src/index.ts` as a single function ([Hono 
 | `GOOGLE_CLIENT_SECRET` | Yes | Web application OAuth client secret. |
 | `MCP_ALLOWED_HOSTS` | No | Comma-separated extra hostnames accepted in the `Host` header of `/mcp`. The `BETTER_AUTH_URL` host and Vercel's `VERCEL_URL`, `VERCEL_BRANCH_URL` and `VERCEL_PROJECT_PRODUCTION_URL` are always accepted. |
 | `MCP_ALLOWED_ORIGINS` | No | Comma-separated hostnames allowed in a browser `Origin` header on `/mcp` (requests without `Origin`, as sent by non-browser clients, pass). |
+| `CIMD_ALLOWED_HOSTS` | No | Comma-separated hostnames allowed to host client metadata documents (the `client_id` URL). Unset allows any host; set it, for example to `claude.ai`, to accept only clients you know. |
+| `GSC_ENABLE_WRITE` | No | `true` requests the `webmasters` write scope from Google and adds the `submit_sitemap` tool. Off by default. |
 | `LOG_LEVEL` | No | Pino level (`info` by default). Logs go to stderr; tokens, secrets, cookies and `Authorization` headers are redacted. |
 
 ### Deploy
@@ -234,8 +237,8 @@ Not verified yet: start the web UI with `pnpm dlx @modelcontextprotocol/inspecto
 ## Security considerations
 
 - Anyone who can sign in with Google can use the server, and each user only reads the Search Console properties **their own** Google account has access to. While the Google OAuth app is in *Testing*, only its listed test users can sign in.
-- Each MCP client must be approved on the consent page, which shows the client's name, the signed-in account and the host it will redirect to. Only approve clients you started yourself.
-- Only the read-only Search Console scope is requested from Google. MCP access tokens are short-lived JWTs (1 hour) bound to the `/mcp` resource; refresh tokens rotate.
+- Each MCP client must be approved on the consent page, which shows the client's name, the signed-in account and the host it will redirect to. Only approve clients you started yourself. Set `CIMD_ALLOWED_HOSTS` to refuse clients whose metadata document is hosted anywhere else.
+- Only the read-only Search Console scope is requested from Google, unless you opt into `GSC_ENABLE_WRITE`; even then the only write tool is `submit_sitemap`. MCP access tokens are short-lived JWTs (1 hour) bound to the `/mcp` resource; refresh tokens rotate.
 - Google access and refresh tokens are encrypted at rest with a key derived from `BETTER_AUTH_SECRET`. Keep that secret and `DATABASE_URL` private; rotating the secret means everyone signs in again.
 - Tokens, secrets, cookies and `Authorization` headers are never logged or returned in tool results. Better Auth's own logger is set to `warn` and routed to Pino on stderr without its extra arguments.
 - The `/sign-in` and `/consent` pages verify Better Auth's signature on the query before acting on it, escape every reflected value, and send a strict Content Security Policy, `X-Frame-Options: DENY` and `Cache-Control: no-store`.
@@ -252,8 +255,6 @@ Not verified yet: start the web UI with `pnpm dlx @modelcontextprotocol/inspecto
 
 ## Roadmap
 
-- Optional write scope (`webmasters`) for sitemap submission.
-- Restricting CIMD clients to known metadata hosts (Better Auth's `isMetadataDocumentUrlAllowed`).
 - Opening the deployment to more users after Google's sensitive-scope verification.
 
 ## Licence

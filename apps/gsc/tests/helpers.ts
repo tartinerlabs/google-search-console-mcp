@@ -1,6 +1,6 @@
 import { createMcpHandler } from "@modelcontextprotocol/server";
 import type { GscClient, GscClientProvider } from "../src/google/client.ts";
-import { createServer } from "../src/server.ts";
+import { createServer, type ServerOptions } from "../src/server.ts";
 
 const PROTOCOL_VERSION = "2026-07-28";
 
@@ -13,6 +13,7 @@ export function mockClient(
     listSitemaps: notMocked,
     querySearchAnalytics: notMocked,
     inspectUrl: notMocked,
+    submitSitemap: notMocked,
     ...overrides,
   };
   return () => client;
@@ -62,8 +63,11 @@ async function readMessage(response: Response) {
 }
 
 /** Call the shared server factory over the SDK's stateless handler (no auth, no network). */
-export function createTestClient(getClient: GscClientProvider = mockClient()) {
-  const handler = createMcpHandler(() => createServer(getClient), {
+export function createTestClient(
+  getClient: GscClientProvider = mockClient(),
+  options: ServerOptions = {},
+) {
+  const handler = createMcpHandler(() => createServer(getClient, options), {
     legacy: "reject",
   });
   const rpc = async (method: string, params: Record<string, unknown> = {}) =>

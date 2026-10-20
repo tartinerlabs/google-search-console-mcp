@@ -34,7 +34,7 @@ Auth (`src/lib/auth.ts` calls `createAuth` from `packages/core/src/auth.ts` with
 
 Tool conventions (follow when adding a tool):
 - Zod 4 input schemas (`import * as z from "zod"`); shared ones such as `siteUrlSchema` live in `src/schemas/common.ts`.
-- Annotate `readOnlyHint: true`; `tests/server.test.ts` asserts the exact tool list and that every tool is read-only.
+- Annotate `readOnlyHint: true`; `tests/server.test.ts` asserts the exact tool list and that every tool is read-only. The one exception is `submit_sitemap`, registered only with `createServer(getClient, { allowWrite: true })` (`GSC_ENABLE_WRITE=true`, which also swaps the Google scope to `webmasters`).
 - Return JSON as a text content block; wrap the body in `try/catch` and return `toToolError(toolName, error)`. `src/utils/errors.ts` classifies Google/Gaxios/network errors into `[invalid_input|auth|permission|quota|not_found|unavailable|network|unexpected]` messages. Throw `CredentialsError` for sign-in problems.
 - Log only through `src/utils/logger.ts` (`createLogger` from `packages/core`: Pino with redaction of tokens/secrets/headers); never log tokens or put them in tool results.
 
@@ -47,4 +47,4 @@ Drizzle ORM 1.0 RC on Neon Postgres (`src/db/index.ts`, node-postgres, relations
 
 ## Environment
 
-Required: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (must exactly match the URL clients use for `/mcp`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. Optional: `MCP_ALLOWED_HOSTS`, `MCP_ALLOWED_ORIGINS`, `LOG_LEVEL`. `apps/pagespeed` also requires `GOOGLE_API_KEY` (PageSpeed Insights API and Chrome UX Report API enabled), sent as the `x-goog-api-key` header. See README for Google Cloud and Vercel setup. Vercel Deployment Protection blocks the self-hosted JWKS fetch and OAuth flow on preview deployments.
+Required: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (must exactly match the URL clients use for `/mcp`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. Optional: `MCP_ALLOWED_HOSTS`, `MCP_ALLOWED_ORIGINS`, `CIMD_ALLOWED_HOSTS` (hostnames allowed to host client metadata documents; unset allows any), `GSC_ENABLE_WRITE` (`apps/gsc` only), `LOG_LEVEL`. `apps/pagespeed` also requires `GOOGLE_API_KEY` (PageSpeed Insights API and Chrome UX Report API enabled), sent as the `x-goog-api-key` header. See README for Google Cloud and Vercel setup. Vercel Deployment Protection blocks the self-hosted JWKS fetch and OAuth flow on preview deployments.
