@@ -1,3 +1,10 @@
+## [0.4.1](https://github.com/tartinerlabs/mcp/compare/v0.4.0...v0.4.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* release idle db connections on fluid compute ([5791d8a](https://github.com/tartinerlabs/mcp/commit/5791d8a649e10bac09eceeb1ea91f72cfc810c31))
+
 # [0.4.0](https://github.com/tartinerlabs/google-search-console-mcp/compare/v0.3.0...v0.4.0) (2026-10-20)
 
 
