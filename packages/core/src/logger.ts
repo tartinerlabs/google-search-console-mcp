@@ -1,0 +1,47 @@
+import { pino } from "pino";
+
+/** Pino logger that redacts tokens, secrets, cookies and Authorization headers. */
+export const createLogger = (name: string) =>
+  pino({
+    name,
+    level: process.env.LOG_LEVEL ?? "info",
+    redact: {
+      paths: [
+        "token",
+        "*.token",
+        "access_token",
+        "*.access_token",
+        "accessToken",
+        "*.accessToken",
+        "refresh_token",
+        "*.refresh_token",
+        "refreshToken",
+        "*.refreshToken",
+        "id_token",
+        "*.id_token",
+        "idToken",
+        "*.idToken",
+        "client_secret",
+        "*.client_secret",
+        "clientSecret",
+        "*.clientSecret",
+        "secret",
+        "*.secret",
+        "authorization",
+        "*.authorization",
+        "cookie",
+        "*.cookie",
+        '["set-cookie"]',
+        '*["set-cookie"]',
+        "authInfo",
+        "*.authInfo",
+        "headers.authorization",
+        "*.headers.authorization",
+        "headers.cookie",
+        "*.headers.cookie",
+        'headers["set-cookie"]',
+        '*.headers["set-cookie"]',
+      ],
+      censor: "[redacted]",
+    },
+  });
