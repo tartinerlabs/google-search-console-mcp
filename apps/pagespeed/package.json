@@ -16,23 +16,23 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "@modelcontextprotocol/server": "2.3.1",
-    "@neon/config": "1.9.1",
+    "@modelcontextprotocol/server": "catalog:",
+    "@neon/config": "catalog:",
     "@repo/core": "workspace:*",
-    "better-auth": "1.7.10",
-    "drizzle-orm": "1.0.0-rc.4",
-    "hono": "4.13.13",
-    "pg": "8.23.1",
-    "zod": "4.6.7"
+    "better-auth": "catalog:",
+    "drizzle-orm": "catalog:",
+    "hono": "catalog:",
+    "pg": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "26.6.5",
-    "@types/pg": "8.23.1",
-    "@vercel/config": "0.12.0",
-    "auth": "1.7.10",
-    "drizzle-kit": "1.0.0-rc.4",
-    "typescript": "7.0.2",
-    "vite": "8.3.4",
-    "vitest": "5.0.5"
+    "@types/node": "catalog:",
+    "@types/pg": "catalog:",
+    "@vercel/config": "catalog:",
+    "auth": "catalog:",
+    "drizzle-kit": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

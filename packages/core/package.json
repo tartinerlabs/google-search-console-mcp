@@ -15,19 +15,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@better-auth/cimd": "1.7.10",
-    "@better-auth/core": "1.7.10",
-    "@better-auth/drizzle-adapter": "1.7.10",
-    "@better-auth/mcp": "1.7.10",
-    "@better-auth/oauth-provider": "1.7.10",
-    "@modelcontextprotocol/server": "2.3.1",
-    "better-auth": "1.7.10",
+    "@better-auth/cimd": "catalog:",
+    "@better-auth/core": "catalog:",
+    "@better-auth/drizzle-adapter": "catalog:",
+    "@better-auth/mcp": "catalog:",
+    "@better-auth/oauth-provider": "catalog:",
+    "@modelcontextprotocol/server": "catalog:",
+    "better-auth": "catalog:",
     "better-call": "1.4.2",
-    "drizzle-orm": "1.0.0-rc.4",
+    "drizzle-orm": "catalog:",
     "pino": "10.4.0"
   },
   "devDependencies": {
-    "@types/node": "26.6.5",
-    "typescript": "7.0.2"
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
   }
 }
