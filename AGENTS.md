@@ -4,17 +4,17 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Commands
 
-pnpm only (`pnpm-lock.yaml`, pnpm 12 and Node declared in `devEngines`). pnpm workspace: the Google Search Console server lives in `apps/gsc`, and Biome and semantic-release run from the root. Paths below are relative to `apps/gsc` unless noted.
+pnpm only (`pnpm-lock.yaml`, pnpm 12 and Node declared in `devEngines`). pnpm workspace: the Google Search Console server lives in `apps/gsc`, and Biome and semantic-release run from the root. Paths and app commands below are relative to `apps/gsc` unless noted.
 
 ```sh
 pnpm check                          # root: biome lint + typecheck + vitest in every app — what CI runs, plus `pnpm build`
 pnpm test                           # root: vitest run in every app
 pnpm format                         # root: biome format --write
 pnpm build                          # root: tsc -p tsconfig.build.json → apps/*/dist/
-pnpm -C apps/gsc vitest run tests/tools.test.ts      # single file
-pnpm -C apps/gsc vitest run -t "search_analytics"    # single describe/test by name
-pnpm -C apps/gsc db:push            # sync schema to the Neon development branch
-pnpm -C apps/gsc db:migrate         # apply committed migrations (also runs as `vercel-build`)
+pnpm vitest run tests/tools.test.ts # single file
+pnpm vitest run -t "search_analytics"  # single describe/test by name
+pnpm db:push                        # sync schema to the Neon development branch
+pnpm db:migrate                     # apply committed migrations (also runs as `vercel-build`)
 ```
 
 Tests need no database, network or Google credentials: they drive `createServer` with a mocked `GscClient` (`tests/helpers.ts` → `mockClient`, `mcpRequest`, `createTestClient`) and never import `src/lib/auth.ts`.
