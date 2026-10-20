@@ -11,7 +11,11 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "test": "turbo run test",
-    "check": "pnpm lint && turbo run typecheck test"
+    "check": "pnpm lint && turbo run typecheck test",
+    "auth:generate": "turbo run auth:generate",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "db:push": "turbo run db:push"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
