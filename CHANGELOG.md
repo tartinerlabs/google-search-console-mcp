@@ -1,3 +1,10 @@
+# [0.8.0](https://github.com/tartinerlabs/mcp/compare/v0.7.1...v0.8.0) (2026-10-21)
+
+
+### Features
+
+* deploy IndexNow MCP on Cloudflare Workers ([40519c1](https://github.com/tartinerlabs/mcp/commit/40519c1fc83661ea8fbc6a8cf5c9442b9ee73b50))
+
 ## [0.7.1](https://github.com/tartinerlabs/mcp/compare/v0.7.0...v0.7.1) (2026-10-21)
 
 
