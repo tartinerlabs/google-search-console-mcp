@@ -222,11 +222,11 @@ The Chrome UX Report API allows 150 queries per minute per Google Cloud project.
 | --- | --- |
 | `ping` | Checks that the server is running. |
 | `verify_key` | Checks that the live site serves the key file with the key as its contents. Submits nothing. |
-| `submit_urls` | Submits up to 10,000 URLs on one host. Refuses unless the live site serves the key file. The only tool that is not read-only. |
+| `submit_urls` | Queues up to 10,000 URLs on one host and returns at once; the key file is checked and the URLs submitted in the background. The only tool that is not read-only. |
 
 The server's instructions tell the client to use it only in projects that contain a key file (such as `public/<key>.txt`), and to submit only the production URLs that changed, once the deploy is live.
 
-It runs on Cloudflare Workers, not Vercel. To deploy, create a Worker named `index-now-mcp` and connect this repository with git deployment (Workers Builds), *Root directory* `apps/index-now`; `apps/index-now/wrangler.jsonc` holds its settings and builds `@repo/core` first. No variables are required. `MCP_ALLOWED_HOSTS` turns on Host header validation, and `MCP_ALLOWED_ORIGINS` and `LOG_LEVEL` work as for the other servers; set them under the Worker's *Variables and Secrets*. Because `/mcp` is open, add a Cloudflare rate-limiting rule on it. Then add it to Claude Code for every project:
+It runs on Cloudflare Workers, not Vercel. To deploy, create a Worker named `index-now-mcp` and connect this repository with git deployment (Workers Builds), *Root directory* `apps/index-now`; `apps/index-now/wrangler.jsonc` holds its settings and builds `@repo/core` first. Before the first deploy, create a queue named `index-now-submissions` (*Storage & Databases → Queues*): `submit_urls` sends to it, and the Worker's consumer checks each host's key file, merges its submissions into one POST, and retries with backoff when the key file is not live yet or IndexNow answers 429 (honouring `Retry-After`) or fails. No variables are required. `MCP_ALLOWED_HOSTS` turns on Host header validation, and `MCP_ALLOWED_ORIGINS` and `LOG_LEVEL` work as for the other servers; set them under the Worker's *Variables and Secrets*. Because `/mcp` is open, add a Cloudflare rate-limiting rule on it. Then add it to Claude Code for every project:
 
 ```sh
 claude mcp add --scope user --transport http index-now https://<your-deployment>/mcp

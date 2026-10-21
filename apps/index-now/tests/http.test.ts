@@ -4,6 +4,8 @@ import { mcpRequest } from "./helpers.ts";
 vi.stubEnv("MCP_ALLOWED_HOSTS", "localhost");
 const { handleMcp } = await import("../src/http.ts");
 
+const queue = { send: vi.fn() };
+
 /** An MCP request as it arrives over the network, Host header included. */
 function withHost(host: string): Request {
   const request = mcpRequest("tools/list");
@@ -14,7 +16,7 @@ function withHost(host: string): Request {
 
 describe("handleMcp", () => {
   it("should answer without sign-in", async () => {
-    const response = await handleMcp(withHost("localhost"));
+    const response = await handleMcp(withHost("localhost"), queue);
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("submit_urls");
   });
@@ -40,13 +42,14 @@ describe("handleMcp", () => {
           },
         }),
       }),
+      queue,
     );
     expect(response.status).toBe(200);
     expect(await response.text()).toContain('"name":"index-now"');
   });
 
   it("should reject a Host that is not allowed", async () => {
-    const response = await handleMcp(withHost("attacker.example"));
+    const response = await handleMcp(withHost("attacker.example"), queue);
     expect(response.status).toBe(403);
   });
 });

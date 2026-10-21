@@ -1,14 +1,14 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod";
 import type { IndexNowClientProvider } from "../indexnow/client.ts";
-import { checkKeyFile, isCoveredBy, keyFileUrl } from "../indexnow/key.ts";
+import { isCoveredBy } from "../indexnow/key.ts";
 import {
   keyLocationSchema,
   keySchema,
   parsePublicUrl,
   publicUrlSchema,
 } from "../schemas/common.ts";
-import { KeyFileError, toToolError } from "../utils/errors.ts";
+import { toToolError } from "../utils/errors.ts";
 
 // IndexNow accepts up to 10,000 URLs in one POST.
 const MAX_URLS = 10_000;
@@ -71,8 +71,10 @@ export function registerSubmitUrlsTool(
       title: "Submit URLs to IndexNow",
       description:
         "Notify IndexNow search engines (Bing, Yandex, Seznam, Naver and others; not Google) that URLs on one host were " +
-        "added, updated or deleted. Only for projects that contain an IndexNow key file: before submitting, the server " +
-        "checks that the live site serves the key file and refuses if it does not. Up to 10,000 URLs per call.",
+        "added, updated or deleted. Only for projects that contain an IndexNow key file. Up to 10,000 URLs per call. " +
+        "Returns as soon as the URLs are queued: in the background the server checks that the live site serves the " +
+        "key file, then submits them, batched per host and retried when IndexNow rate-limits. Use verify_key to check " +
+        "the key file now.",
       inputSchema,
       annotations: {
         readOnlyHint: false,
@@ -86,12 +88,8 @@ export function registerSubmitUrlsTool(
         const client = await getClient();
         const urlList = [...new Set(urls)];
         const first = urlList[0] as string;
-        const location = keyFileUrl(first, key, keyLocation);
-        const failure = await checkKeyFile(client, location, key);
-        if (failure) throw new KeyFileError(failure);
-
         const host = new URL(first).hostname;
-        const status = await client.submit({
+        await client.enqueue({
           host,
           key,
           ...(keyLocation && { keyLocation }),
@@ -99,13 +97,10 @@ export function registerSubmitUrlsTool(
         });
         const result = {
           host,
-          submitted: urlList.length,
-          status,
-          // 202: received, with IndexNow's own key check still pending.
+          queued: urlList.length,
           note:
-            status === 202
-              ? "Accepted; IndexNow will validate the key before processing."
-              : "Accepted.",
+            "Queued. The server checks the key file and submits in the background, retrying if the key file is " +
+            "not live yet or IndexNow rate-limits; nothing more to do.",
         };
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],

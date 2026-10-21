@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import { IndexNowApiError } from "../src/utils/errors.ts";
 import { createTestClient, mockClient } from "./helpers.ts";
 
 const KEY = "test-key-not-secret";
@@ -7,10 +6,12 @@ const keyFile = (status = 200, text = KEY) =>
   vi.fn().mockResolvedValue({ status, text });
 
 describe("submit_urls", () => {
-  it("should check the root key file, then submit the deduplicated urls", async () => {
-    const fetchKeyFile = keyFile(200, `${KEY}\n`);
-    const submit = vi.fn().mockResolvedValue(200);
-    const { callTool } = createTestClient(mockClient({ fetchKeyFile, submit }));
+  it("should queue the deduplicated urls without fetching the key file", async () => {
+    const fetchKeyFile = vi.fn();
+    const enqueue = vi.fn().mockResolvedValue(1);
+    const { callTool } = createTestClient(
+      mockClient({ fetchKeyFile, enqueue }),
+    );
 
     const result = await callTool("submit_urls", {
       urls: [
@@ -22,24 +23,22 @@ describe("submit_urls", () => {
     });
 
     expect(result.isError).toBe(false);
-    expect(fetchKeyFile).toHaveBeenCalledWith(`https://example.com/${KEY}.txt`);
-    expect(submit).toHaveBeenCalledWith({
+    expect(fetchKeyFile).not.toHaveBeenCalled();
+    expect(enqueue).toHaveBeenCalledWith({
       host: "example.com",
       key: KEY,
       urlList: ["https://example.com/a", "https://example.com/b"],
     });
     expect(JSON.parse(result.text)).toMatchObject({
       host: "example.com",
-      submitted: 2,
-      status: 200,
+      queued: 2,
     });
   });
 
   it("should pass keyLocation through when the key file is not at the root", async () => {
     const keyLocation = `https://example.com/blog/${KEY}.txt`;
-    const fetchKeyFile = keyFile();
-    const submit = vi.fn().mockResolvedValue(202);
-    const { callTool } = createTestClient(mockClient({ fetchKeyFile, submit }));
+    const enqueue = vi.fn().mockResolvedValue(1);
+    const { callTool } = createTestClient(mockClient({ enqueue }));
 
     const result = await callTool("submit_urls", {
       urls: ["https://example.com/blog/post"],
@@ -47,54 +46,10 @@ describe("submit_urls", () => {
       keyLocation,
     });
 
-    expect(fetchKeyFile).toHaveBeenCalledWith(keyLocation);
-    expect(submit).toHaveBeenCalledWith(
+    expect(result.isError).toBe(false);
+    expect(enqueue).toHaveBeenCalledWith(
       expect.objectContaining({ keyLocation }),
     );
-    expect(JSON.parse(result.text).note).toContain("will validate the key");
-  });
-
-  it.each([
-    ["missing", keyFile(404, "Not Found"), "not found"],
-    ["redirected", keyFile(308, ""), "redirects"],
-    [
-      "holding another key",
-      keyFile(200, "something-else"),
-      "does not contain the key",
-    ],
-  ])(
-    "should submit nothing when the key file is %s",
-    async (_label, fetchKeyFile, expected) => {
-      const submit = vi.fn();
-      const { callTool } = createTestClient(
-        mockClient({ fetchKeyFile, submit }),
-      );
-
-      const result = await callTool("submit_urls", {
-        urls: ["https://example.com/a"],
-        key: KEY,
-      });
-
-      expect(result.isError).toBe(true);
-      expect(result.text).toMatch(/^\[not_found\]/);
-      expect(result.text).toContain(expected);
-      expect(submit).not.toHaveBeenCalled();
-    },
-  );
-
-  it("should report IndexNow's rate limit as a quota error", async () => {
-    const submit = vi.fn().mockRejectedValue(new IndexNowApiError(429, ""));
-    const { callTool } = createTestClient(
-      mockClient({ fetchKeyFile: keyFile(), submit }),
-    );
-
-    const result = await callTool("submit_urls", {
-      urls: ["https://example.com/a"],
-      key: KEY,
-    });
-
-    expect(result.isError).toBe(true);
-    expect(result.text).toMatch(/^\[quota\]/);
   });
 });
 

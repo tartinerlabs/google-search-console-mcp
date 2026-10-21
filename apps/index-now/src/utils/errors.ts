@@ -15,11 +15,14 @@ export class IndexNowApiError extends Error {
   override name = "IndexNowApiError";
   readonly status: number;
   readonly body: string;
+  /** Seconds from a Retry-After header, when IndexNow sends one. */
+  readonly retryAfter: number | undefined;
 
-  constructor(status: number, body: string) {
+  constructor(status: number, body: string, retryAfter?: number) {
     super(`IndexNow request failed with HTTP ${status}`);
     this.status = status;
     this.body = body;
+    this.retryAfter = retryAfter;
   }
 }
 

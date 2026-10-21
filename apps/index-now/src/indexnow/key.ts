@@ -19,7 +19,7 @@ export function isCoveredBy(url: string, keyLocation: string): boolean {
 
 /** Fetches the key file and resolves why it would fail IndexNow's check, or undefined when it passes. */
 export async function checkKeyFile(
-  client: IndexNowClient,
+  client: Pick<IndexNowClient, "fetchKeyFile">,
   location: string,
   key: string,
 ): Promise<string | undefined> {
