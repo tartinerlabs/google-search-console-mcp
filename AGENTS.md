@@ -21,7 +21,7 @@ Tests need no database, network or Google credentials: they drive `createServer`
 
 ## Architecture
 
-A stateless Streamable HTTP MCP server for read-only Google Search Console access, deployed to Vercel as a single Hono function (`vercel.ts`: `framework: "hono"`, region `sin1`). TypeScript runs as native ESM with `.ts` import extensions (`rewriteRelativeImportExtensions`, `erasableSyntaxOnly` — no enums/namespaces/parameter properties).
+A stateless Streamable HTTP MCP server for read-only Google Search Console access, deployed to Vercel as a single Hono function (`vercel.ts`: region `sin1`). TypeScript runs as native ESM with `.ts` import extensions (`rewriteRelativeImportExtensions`, `erasableSyntaxOnly` — no enums/namespaces/parameter properties).
 
 Request flow:
 
