@@ -1,3 +1,10 @@
+## [0.7.1](https://github.com/tartinerlabs/mcp/compare/v0.7.0...v0.7.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* report package version from package.json ([f9b1259](https://github.com/tartinerlabs/mcp/commit/f9b1259f7a9db68437bf81bcc67fb83b4f63f690))
+
 # [0.7.0](https://github.com/tartinerlabs/mcp/compare/v0.6.1...v0.7.0) (2026-10-21)
 
 
