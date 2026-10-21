@@ -1,11 +1,12 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod";
+import pkg from "../package.json" with { type: "json" };
 import type { IndexNowClientProvider } from "./indexnow/client.ts";
 import { registerSubmitUrlsTool } from "./tools/submit-urls.ts";
 import { registerVerifyKeyTool } from "./tools/verify-key.ts";
 
 const SERVER_NAME = "index-now";
-const SERVER_VERSION = "0.1.0";
+const SERVER_VERSION = pkg.version;
 
 const INSTRUCTIONS = `Submits changed URLs to IndexNow (Bing, Yandex, Seznam, Naver and others; not Google).
 

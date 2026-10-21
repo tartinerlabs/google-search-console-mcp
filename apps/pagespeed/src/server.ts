@@ -1,12 +1,13 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod";
+import pkg from "../package.json" with { type: "json" };
 import type { PageSpeedClientProvider } from "./google/client.ts";
 import { registerCruxTool } from "./tools/crux.ts";
 import { registerCruxHistoryTool } from "./tools/crux-history.ts";
 import { registerPagespeedTool } from "./tools/pagespeed.ts";
 
 const SERVER_NAME = "pagespeed";
-const SERVER_VERSION = "0.1.0";
+const SERVER_VERSION = pkg.version;
 
 /** Server factory for the HTTP handler. */
 export function createServer(getClient: PageSpeedClientProvider): McpServer {
