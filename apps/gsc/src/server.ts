@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod";
+import pkg from "../package.json" with { type: "json" };
 import type { GscClientProvider } from "./google/client.ts";
 import { registerAnalyticsTool } from "./tools/analytics.ts";
 import { registerComparePeriodsTool } from "./tools/compare-periods.ts";
@@ -12,7 +13,7 @@ import {
 import { registerSitesTool } from "./tools/sites.ts";
 
 const SERVER_NAME = "google-search-console";
-const SERVER_VERSION = "0.1.0";
+const SERVER_VERSION = pkg.version;
 
 export interface ServerOptions {
   /** Register `submit_sitemap`, which needs the `webmasters` write scope. */

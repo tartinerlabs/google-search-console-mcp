@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import pkg from "../package.json" with { type: "json" };
 import { createTestClient } from "./helpers.ts";
 
 describe("MCP server", () => {
@@ -8,7 +9,7 @@ describe("MCP server", () => {
     expect(message.result.supportedVersions).toEqual(["2026-07-28"]);
     expect(message.result._meta["io.modelcontextprotocol/serverInfo"]).toEqual({
       name: "pagespeed",
-      version: "0.1.0",
+      version: pkg.version,
     });
   });
 
