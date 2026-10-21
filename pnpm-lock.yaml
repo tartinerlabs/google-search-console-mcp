@@ -336,9 +336,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.5
-      '@vercel/config':
-        specifier: 'catalog:'
-        version: 0.12.0
       typescript:
         specifier: 'catalog:'
         version: 7.0.2

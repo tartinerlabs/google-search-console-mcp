@@ -1,0 +1,11 @@
+// Read by Cloudflare Workers Builds (git deployment) only; nothing runs Wrangler locally.
+{
+  "name": "index-now-mcp",
+  "main": "src/index.ts",
+  // nodejs_compat (on by default from 2026-08-04) populates process.env from vars and secrets.
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // @repo/core is consumed from its compiled dist/, so build it before the Worker is bundled.
+  "build": { "command": "pnpm --filter @repo/core build" },
+  "observability": { "enabled": true }
+}
