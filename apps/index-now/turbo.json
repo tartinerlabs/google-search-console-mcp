@@ -1,0 +1,9 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "env": ["MCP_ALLOWED_HOSTS", "MCP_ALLOWED_ORIGINS", "LOG_LEVEL"]
+    }
+  }
+}

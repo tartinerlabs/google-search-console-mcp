@@ -1,0 +1,27 @@
+{
+  "name": "@tartinerlabs/index-now-mcp",
+  "version": "0.6.1",
+  "description": "Unofficial Model Context Protocol server for IndexNow URL submission, on Vercel.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "vercel-build": "turbo run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "catalog:",
+    "@repo/core": "workspace:*",
+    "hono": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@vercel/config": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}
