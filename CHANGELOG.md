@@ -1,3 +1,10 @@
+# [0.7.0](https://github.com/tartinerlabs/mcp/compare/v0.6.1...v0.7.0) (2026-10-21)
+
+
+### Features
+
+* add IndexNow MCP server ([377c31d](https://github.com/tartinerlabs/mcp/commit/377c31db68d8c1fe26ac9f92544317c315a271d2))
+
 ## [0.6.1](https://github.com/tartinerlabs/mcp/compare/v0.6.0...v0.6.1) (2026-10-20)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "@tartinerlabs/index-now-mcp",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Unofficial Model Context Protocol server for IndexNow URL submission, on Vercel.",
   "license": "MIT",
   "type": "module",
