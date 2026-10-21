@@ -4,7 +4,7 @@ An unofficial [Model Context Protocol](https://modelcontextprotocol.io) (MCP) se
 
 The server runs as a stateless Streamable HTTP endpoint on Vercel. MCP clients connect with nothing but its URL, `https://<your-domain>/mcp`: on first use the client opens a browser, you sign in with Google and approve the client, and every tool call then runs as **your** Google account. Nothing needs to run on your machine.
 
-This repository is a pnpm workspace: the Search Console server lives in `apps/gsc`, and a second server for PageSpeed Insights and the Chrome UX Report lives in `apps/pagespeed` (see [PageSpeed Insights server](#pagespeed-insights-server)). Shared auth and HTTP code is in `packages/core`.
+This repository is a pnpm workspace: the Search Console server lives in `apps/gsc`, a second server for PageSpeed Insights and the Chrome UX Report lives in `apps/pagespeed` (see [PageSpeed Insights server](#pagespeed-insights-server)), and a third for IndexNow URL submission lives in `apps/index-now` (see [IndexNow server](#indexnow-server)). Shared auth and HTTP code is in `packages/core`.
 
 > This project is not affiliated with, endorsed by or supported by Google. "Google" and "Search Console" are trademarks of Google LLC.
 
@@ -213,6 +213,24 @@ Setup differs from the Search Console server in three ways:
 3. Set the same environment variables as above, plus `GOOGLE_API_KEY`. The key is sent in the `x-goog-api-key` header.
 
 The Chrome UX Report API allows 150 queries per minute per Google Cloud project. Pages without enough Chrome traffic have no CrUX data, which is reported as `[not_found]`.
+
+## IndexNow server
+
+`apps/index-now` submits changed URLs to [IndexNow](https://www.indexnow.org), which shares them with Bing, Yandex, Seznam, Naver and other participating search engines (Google does not take part). Unlike the other servers it has no sign-in and no database: ownership is proved by the site itself, which must serve a key file at `https://<host>/<key>.txt` whose contents are the key.
+
+| Tool | What it does |
+| --- | --- |
+| `ping` | Checks that the server is running. |
+| `verify_key` | Checks that the live site serves the key file with the key as its contents. Submits nothing. |
+| `submit_urls` | Submits up to 10,000 URLs on one host. Refuses unless the live site serves the key file. The only tool that is not read-only. |
+
+The server's instructions tell the client to use it only in projects that contain a key file (such as `public/<key>.txt`), and to submit only the production URLs that changed, once the deploy is live.
+
+To deploy, create a separate Vercel project with *Root Directory* `apps/index-now`. No environment variables are required; `MCP_ALLOWED_HOSTS`, `MCP_ALLOWED_ORIGINS` and `LOG_LEVEL` work as for the other servers. Because `/mcp` is open, add a Vercel Firewall rate-limit rule on it. Then add it to Claude Code for every project:
+
+```sh
+claude mcp add --scope user --transport http index-now https://<your-deployment>/mcp
+```
 
 ## Local development
 
