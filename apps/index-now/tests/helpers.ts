@@ -13,7 +13,8 @@ export function mockClient(
   const notMocked = () => Promise.reject(new Error("not mocked"));
   const client: IndexNowClient = {
     fetchKeyFile: notMocked,
-    submit: notMocked,
+    startSubmission: notMocked,
+    getSubmission: notMocked,
     ...overrides,
   };
   return () => client;
@@ -41,6 +42,7 @@ export function mcpRequest(
       params: {
         ...params,
         _meta: {
+          ...(params._meta as Record<string, unknown> | undefined),
           "io.modelcontextprotocol/protocolVersion": PROTOCOL_VERSION,
           "io.modelcontextprotocol/clientCapabilities": {},
         },
@@ -54,7 +56,8 @@ async function readMessage(response: Response) {
   const text = await response.text();
   const data = text
     .split("\n")
-    .find((line) => line.startsWith("data: "))
+    // The response is the last event, after any progress notifications.
+    .findLast((line) => line.startsWith("data: "))
     ?.slice("data: ".length);
   return JSON.parse(data ?? text);
 }

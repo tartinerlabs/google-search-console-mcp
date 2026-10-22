@@ -13,7 +13,7 @@ describe("MCP server", () => {
     });
   });
 
-  it("should register ping, verify_key and the one write tool, submit_urls", async () => {
+  it("should register the read-only tools and the one write tool, submit_urls", async () => {
     const { rpc } = createTestClient();
     const message = await rpc("tools/list");
     const tools: {
@@ -22,6 +22,7 @@ describe("MCP server", () => {
     }[] = message.result.tools;
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       "ping",
+      "submission_status",
       "submit_urls",
       "verify_key",
     ]);

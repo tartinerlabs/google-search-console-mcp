@@ -13,12 +13,39 @@ export interface KeyFileResponse {
   text: string;
 }
 
-/** The HTTP operations the MCP tools depend on. */
+/** A submission Workflow instance, as `instance.status()` reports it. */
+export interface Submission {
+  status:
+    | "queued"
+    | "running"
+    | "paused"
+    | "errored"
+    | "terminated"
+    | "complete"
+    | "waiting"
+    | "waitingForPause"
+    | "unknown";
+  error?: { name: string; message: string };
+  output?: unknown;
+}
+
+/** The parts of the Cloudflare Workflow binding the tools use. */
+export interface SubmissionWorkflow {
+  create(options: {
+    id: string;
+    params: SubmitRequest;
+  }): Promise<{ id: string }>;
+  get(id: string): Promise<{ status(): Promise<Submission> }>;
+}
+
+/** The operations the MCP tools depend on. */
 export interface IndexNowClient {
   /** Fetches a key file without following redirects. */
   fetchKeyFile(url: string): Promise<KeyFileResponse>;
-  /** Submits URLs and resolves the IndexNow status code (200 or 202). */
-  submit(request: SubmitRequest): Promise<number>;
+  /** Starts a durable submission and resolves its id. */
+  startSubmission(request: SubmitRequest): Promise<string>;
+  /** Resolves a submission's status, or undefined when no such submission exists. */
+  getSubmission(id: string): Promise<Submission | undefined>;
 }
 
 /** Resolves the client lazily, inside each tool call, as the other servers do. */
@@ -32,30 +59,59 @@ const TIMEOUT_MS = 30_000;
 // A key file holds at most 128 characters; anything much longer is not one.
 const MAX_KEY_FILE_LENGTH = 1024;
 
-export function createIndexNowClient(): IndexNowClient {
+/** Fetches a key file without following redirects. */
+export async function fetchKeyFile(url: string): Promise<KeyFileResponse> {
+  // Redirects are not followed, so a user-supplied host cannot steer the
+  // request elsewhere.
+  const response = await fetch(url, {
+    redirect: "manual",
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  const text = (await response.text()).slice(0, MAX_KEY_FILE_LENGTH);
+  return { status: response.status, text };
+}
+
+/** Submits URLs and resolves the IndexNow status code (200 or 202). */
+export async function submitToIndexNow(
+  request: SubmitRequest,
+): Promise<number> {
+  const response = await fetch(INDEXNOW_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json; charset=utf-8" },
+    body: JSON.stringify(request),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    const retryAfter = Number(response.headers.get("retry-after"));
+    throw new IndexNowApiError(
+      response.status,
+      text,
+      retryAfter > 0 ? retryAfter : undefined,
+    );
+  }
+  return response.status;
+}
+
+export function createIndexNowClient(
+  workflow: SubmissionWorkflow,
+): IndexNowClient {
   return {
-    async fetchKeyFile(url) {
-      // Redirects are not followed, so a user-supplied host cannot steer the
-      // request elsewhere.
-      const response = await fetch(url, {
-        redirect: "manual",
-        signal: AbortSignal.timeout(TIMEOUT_MS),
+    fetchKeyFile,
+    async startSubmission(request) {
+      const instance = await workflow.create({
+        id: crypto.randomUUID(),
+        params: request,
       });
-      const text = (await response.text()).slice(0, MAX_KEY_FILE_LENGTH);
-      return { status: response.status, text };
+      return instance.id;
     },
-    async submit(request) {
-      const response = await fetch(INDEXNOW_URL, {
-        method: "POST",
-        headers: { "content-type": "application/json; charset=utf-8" },
-        body: JSON.stringify(request),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      });
-      if (!response.ok) {
-        const text = await response.text().catch(() => "");
-        throw new IndexNowApiError(response.status, text);
+    async getSubmission(id) {
+      try {
+        return await (await workflow.get(id)).status();
+      } catch {
+        // get() throws for an id with no instance.
+        return undefined;
       }
-      return response.status;
     },
   };
 }

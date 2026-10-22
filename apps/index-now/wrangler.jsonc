@@ -7,5 +7,14 @@
   "compatibility_flags": ["nodejs_compat"],
   // @repo/core is consumed from its compiled dist/, so build it before the Worker is bundled.
   "build": { "command": "pnpm --filter @repo/core build" },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // submit_urls runs each submission as a durable Workflow instance that
+  // retries while the key file goes live and when IndexNow rate-limits.
+  "workflows": [
+    {
+      "name": "index-now-submissions",
+      "binding": "SUBMISSIONS",
+      "class_name": "SubmitWorkflow"
+    }
+  ]
 }
