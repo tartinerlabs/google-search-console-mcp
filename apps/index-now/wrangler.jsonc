@@ -8,19 +8,13 @@
   // @repo/core is consumed from its compiled dist/, so build it before the Worker is bundled.
   "build": { "command": "pnpm --filter @repo/core build" },
   "observability": { "enabled": true },
-  // submit_urls queues submissions; the consumer merges them per host and backs
-  // off when IndexNow answers 429. The queue must exist in the account first.
-  "queues": {
-    "producers": [
-      { "binding": "INDEXNOW_QUEUE", "queue": "index-now-submissions" }
-    ],
-    "consumers": [
-      {
-        "queue": "index-now-submissions",
-        "max_batch_size": 100,
-        "max_batch_timeout": 30,
-        "max_retries": 5
-      }
-    ]
-  }
+  // submit_urls runs each submission as a durable Workflow instance that
+  // retries while the key file goes live and when IndexNow rate-limits.
+  "workflows": [
+    {
+      "name": "index-now-submissions",
+      "binding": "SUBMISSIONS",
+      "class_name": "SubmitWorkflow"
+    }
+  ]
 }

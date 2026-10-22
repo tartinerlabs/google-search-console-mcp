@@ -13,17 +13,39 @@ export interface KeyFileResponse {
   text: string;
 }
 
-/** The producer side of the Cloudflare Queue binding that buffers submissions. */
-export interface SubmissionQueue {
-  send(body: SubmitRequest): Promise<unknown>;
+/** A submission Workflow instance, as `instance.status()` reports it. */
+export interface Submission {
+  status:
+    | "queued"
+    | "running"
+    | "paused"
+    | "errored"
+    | "terminated"
+    | "complete"
+    | "waiting"
+    | "waitingForPause"
+    | "unknown";
+  error?: { name: string; message: string };
+  output?: unknown;
 }
 
-/** The HTTP operations the MCP tools depend on. */
+/** The parts of the Cloudflare Workflow binding the tools use. */
+export interface SubmissionWorkflow {
+  create(options: {
+    id: string;
+    params: SubmitRequest;
+  }): Promise<{ id: string }>;
+  get(id: string): Promise<{ status(): Promise<Submission> }>;
+}
+
+/** The operations the MCP tools depend on. */
 export interface IndexNowClient {
   /** Fetches a key file without following redirects. */
   fetchKeyFile(url: string): Promise<KeyFileResponse>;
-  /** Queues URLs for the consumer to submit; resolves the number of queue messages. */
-  enqueue(request: SubmitRequest): Promise<number>;
+  /** Starts a durable submission and resolves its id. */
+  startSubmission(request: SubmitRequest): Promise<string>;
+  /** Resolves a submission's status, or undefined when no such submission exists. */
+  getSubmission(id: string): Promise<Submission | undefined>;
 }
 
 /** Resolves the client lazily, inside each tool call, as the other servers do. */
@@ -36,29 +58,6 @@ const INDEXNOW_URL = "https://api.indexnow.org/indexnow";
 const TIMEOUT_MS = 30_000;
 // A key file holds at most 128 characters; anything much longer is not one.
 const MAX_KEY_FILE_LENGTH = 1024;
-// Queue messages are capped at 128 KB; leave room for the rest of the body.
-const MAX_MESSAGE_URL_BYTES = 100_000;
-
-const encoder = new TextEncoder();
-
-/** Splits a submission into queue messages that each fit the message size limit. */
-export function toMessages(request: SubmitRequest): SubmitRequest[] {
-  const messages: SubmitRequest[] = [];
-  let urlList: string[] = [];
-  let bytes = 0;
-  for (const url of request.urlList) {
-    const size = encoder.encode(url).length + 3;
-    if (urlList.length > 0 && bytes + size > MAX_MESSAGE_URL_BYTES) {
-      messages.push({ ...request, urlList });
-      urlList = [];
-      bytes = 0;
-    }
-    urlList.push(url);
-    bytes += size;
-  }
-  messages.push({ ...request, urlList });
-  return messages;
-}
 
 /** Fetches a key file without following redirects. */
 export async function fetchKeyFile(url: string): Promise<KeyFileResponse> {
@@ -88,19 +87,31 @@ export async function submitToIndexNow(
     throw new IndexNowApiError(
       response.status,
       text,
-      Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined,
+      retryAfter > 0 ? retryAfter : undefined,
     );
   }
   return response.status;
 }
 
-export function createIndexNowClient(queue: SubmissionQueue): IndexNowClient {
+export function createIndexNowClient(
+  workflow: SubmissionWorkflow,
+): IndexNowClient {
   return {
     fetchKeyFile,
-    async enqueue(request) {
-      const messages = toMessages(request);
-      await Promise.all(messages.map((message) => queue.send(message)));
-      return messages.length;
+    async startSubmission(request) {
+      const instance = await workflow.create({
+        id: crypto.randomUUID(),
+        params: request,
+      });
+      return instance.id;
+    },
+    async getSubmission(id) {
+      try {
+        return await (await workflow.get(id)).status();
+      } catch {
+        // get() throws for an id with no instance.
+        return undefined;
+      }
     },
   };
 }
