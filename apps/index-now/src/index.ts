@@ -17,7 +17,7 @@ interface Env {
   SUBMISSIONS: SubmissionWorkflow;
 }
 
-/** Durable IndexNow submission: retried across rate limits and deploys going live. */
+/** Durable IndexNow submission: retried across outages and deploys going live. */
 export class SubmitWorkflow extends WorkflowEntrypoint<Env, SubmitRequest> {
   run(event: WorkflowEvent<SubmitRequest>, step: WorkflowStep) {
     return runSubmission(event.payload, step as SubmissionStep, {

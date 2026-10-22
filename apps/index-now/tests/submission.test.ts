@@ -104,10 +104,10 @@ describe("runSubmission", () => {
     },
   );
 
-  it("should wait out IndexNow's Retry-After on a rate limit", async () => {
+  it("should wait out IndexNow's Retry-After when it is unavailable", async () => {
     const submit = vi
       .fn()
-      .mockRejectedValueOnce(new IndexNowApiError(429, "", 120))
+      .mockRejectedValueOnce(new IndexNowApiError(503, "", 120))
       .mockResolvedValue(200);
     const { step, delays } = fakeStep();
 
@@ -119,8 +119,10 @@ describe("runSubmission", () => {
     expect(delays).toEqual(["120 seconds"]);
   });
 
-  it("should fail with a quota error when the rate limit outlasts the retries", async () => {
-    const submit = vi.fn().mockRejectedValue(new IndexNowApiError(429, ""));
+  it("should fail with a quota error on a rate limit without retrying", async () => {
+    const submit = vi
+      .fn()
+      .mockRejectedValue(new IndexNowApiError(429, "", 120));
 
     await expect(
       runSubmission(request, fakeStep().step, {
@@ -128,7 +130,7 @@ describe("runSubmission", () => {
         submit,
       }),
     ).rejects.toThrow(/^\[quota\] /);
-    expect(submit).toHaveBeenCalledTimes(7);
+    expect(submit).toHaveBeenCalledOnce();
   });
 
   it("should not retry a submission IndexNow rejects", async () => {
