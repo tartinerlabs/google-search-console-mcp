@@ -114,7 +114,8 @@ export function registerSubmitUrlsTool(
         "Notify IndexNow search engines (Bing, Yandex, Seznam, Naver and others; not Google) that URLs on one host were " +
         "added, updated or deleted. Only for projects that contain an IndexNow key file. Up to 10,000 URLs per call. " +
         "The submission runs durably on the server: it waits for the live site to serve the key file and retries when " +
-        "IndexNow rate-limits, reporting progress, and returns the outcome. If it is still retrying after 10 minutes, " +
+        "IndexNow is unavailable, reporting progress, and returns the outcome. A rate limit fails at once; do not " +
+        "resubmit soon after one. If it is still retrying after 10 minutes, " +
         "the call returns a submissionId to check later with submission_status.",
       inputSchema,
       annotations: {

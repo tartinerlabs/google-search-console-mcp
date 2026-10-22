@@ -52,9 +52,10 @@ export function submitRetryDelay({
 
 /**
  * The submission Workflow's steps: wait for the key file to be live, then
- * POST to IndexNow. Failures that can pass (the deploy still going live, rate
- * limits, outages) throw inside a step so the Workflow retries it; rejections
- * end the run with the classified error.
+ * POST to IndexNow. Failures that can pass (the deploy still going live,
+ * outages) throw inside a step so the Workflow retries it; rate limits and
+ * rejections end the run with the classified error, since retrying a throttled
+ * host only prolongs the throttle.
  */
 export async function runSubmission(
   request: SubmitRequest,
@@ -88,7 +89,7 @@ export async function runSubmission(
         return { status: await deps.submit(request) };
       } catch (error) {
         const { kind, message } = classifyError(error);
-        if (kind === "quota" || kind === "unavailable" || kind === "network") {
+        if (kind === "unavailable" || kind === "network") {
           const retryAfter =
             error instanceof IndexNowApiError && error.retryAfter
               ? ` retry after ${error.retryAfter}s`

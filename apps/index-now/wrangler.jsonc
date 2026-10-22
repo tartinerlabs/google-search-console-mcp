@@ -8,6 +8,9 @@
   // @repo/core is consumed from its compiled dist/, so build it before the Worker is bundled.
   "build": { "command": "pnpm --filter @repo/core build" },
   "observability": { "enabled": true },
+  // Non-production branch builds run `wrangler preview`, which requires this block.
+  // Previews get no Workflow binding, so submit_urls only works in production.
+  "previews": {},
   // submit_urls runs each submission as a durable Workflow instance that
   // retries while the key file goes live and when IndexNow rate-limits.
   "workflows": [
