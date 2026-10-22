@@ -1,3 +1,16 @@
+# [0.9.0](https://github.com/tartinerlabs/mcp/compare/v0.8.0...v0.9.0) (2026-10-22)
+
+
+### Bug Fixes
+
+* fail fast when IndexNow rate-limits ([1f2a61f](https://github.com/tartinerlabs/mcp/commit/1f2a61fc7428c8616817647af2720f07ac543622))
+
+
+### Features
+
+* queue IndexNow submissions in the background ([1dbbf09](https://github.com/tartinerlabs/mcp/commit/1dbbf09f864571623fe812cbb66d98c9540f668f))
+* run IndexNow submissions as Workflows ([37e84b2](https://github.com/tartinerlabs/mcp/commit/37e84b2322ed7ec47bb522e081deda64ce191a48))
+
 # [0.8.0](https://github.com/tartinerlabs/mcp/compare/v0.7.1...v0.8.0) (2026-10-21)
 
 

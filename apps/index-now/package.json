@@ -1,6 +1,6 @@
 {
   "name": "@tartinerlabs/index-now-mcp",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Unofficial Model Context Protocol server for IndexNow URL submission, on Cloudflare Workers.",
   "license": "MIT",
   "type": "module",
